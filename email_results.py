@@ -37,11 +37,11 @@ def get_email_body(account_id, s3_client, logger):
                 result_url = '{}/{}/{}'.format('https://s3-eu-west-1.amazonaws.com', craws.bucket, key)
                 continue
             result = craws.get_result_json(key)
-            green = int(result['GreenCount'])*100/int(result['RegionCount'])
-            red = int(result['RedCount'])*100/int(result['RegionCount'])
-            orange = int(result['OrangeCount'])*100/int(result['RegionCount'])
-            yellow = int(result['YellowCount'])*100/int(result['RegionCount'])
-            grey = int(result['GreyCount'])*100/int(result['RegionCount'])
+            green = int(result['GreenCount'])*100/int(result['TotalCount'])
+            red = int(result['RedCount'])*100/int(result['TotalCount'])
+            orange = int(result['OrangeCount'])*100/int(result['TotalCount'])
+            yellow = int(result['YellowCount'])*100/int(result['TotalCount'])
+            grey = int(result['GreyCount'])*100/int(result['TotalCount'])
             email_body += '<tr><td>' + result['Rule Name'] + '</td><td><table style="border-collapse:collapse"><tr>'
             if green > 0:
                 email_body += '<td class="green-bar" width="' + str(green) + '%"></td>'
@@ -57,16 +57,20 @@ def get_email_body(account_id, s3_client, logger):
         email_body += '</table><br/>'
 
         # Add the legends
-        email_body += ('<table style="width:50%;border:hidden"><tr>'
+        """email_body += ('<table style="width:100%;border:hidden"><tr>'
                         '<td class="green-bar" width="5%"></td><td>No Issues</td>'
                         '<td class="red-bar" width="5%"></td><td>Issues - Critical</td>'
                         '<td class="orange-bar" width="5%"></td><td>Issues - Medium</td>'
                         '<td class="yellow-bar" width="5%"></td><td>Issues - Minor</td>'
-                        '<td class="grey-bar" width="5%"></td><td>Not checked</td></table><br/>'
+                        '<td class="grey-bar" width="5%"></td><td>Not checked</td></tr></table><br/>'
+        )"""
+        email_body += ('<table style="width:100%;border:hidden"><tr>'
+                        + craws.status['Green'] + craws.status['Red'] + craws.status['Orange']
+                        + craws.status['Yellow'] + craws.status['Grey'] + '</tr></table><br/>'
         )
         # Add the link to detailed results
         if result_url:
-            email_body += '<a href="' + result_url + '">Click here</a> for detailed findings.'
+            email_body += 'For detailed findings, <a href="' + result_url + '">click here</a>.'
         email_body += '</body></html>'
     except Exception as e:
         logger.error(e)
@@ -98,7 +102,7 @@ def send_email(email_body, key, ses_client, logger):
 
 
 def handler(event, context):
-    logger = craws.get_logger('EmailResults')
+    logger = craws.get_logger(name='EmailResults', level='DEBUG')
     logger.debug('Emailing results started')
     # Creates an s3 client with the role 'crawsExecution', since 'crawsExecution' is the only role with write access to 
     # our s3 bucket and permission to send emails.

@@ -24,11 +24,11 @@ role_arns = ['arn:aws:iam::013185853748:role/cloudops-mdm-prod-craws',
 """ Traffic light symbols used to show against the results of every region. If the check did not run for a region due to an
     exception, mark that region as 'Grey' during the exception handling.
 """
-status = {  'Red': '<span class="red-dot"></span> Issues - Critical',
-            'Orange': '<span class="orange-dot"></span> Issues - Medium',
-            'Yellow': '<span class="yellow-dot"></span> Issues - Minor',
-            'Green': '<span class="green-dot"></span> No Issues',
-            'Grey': '<span class="grey-dot"></span> Not Checked'}
+status = {  'Red': '<span class="red-dot"></span> Issues - Critical ',
+            'Orange': '<span class="orange-dot"></span> Issues - Medium ',
+            'Yellow': '<span class="yellow-dot"></span> Issues - Minor ',
+            'Green': '<span class="green-dot"></span> No Issues ',
+            'Grey': '<span class="grey-dot"></span> Not Checked '}
 
 _style = '<style>' +\
     '.red-dot { height: 15px; width: 15px; background-color: #d00; border-radius: 40%; display: inline-block; }' +\
@@ -44,7 +44,7 @@ _style = '<style>' +\
     'table, h3 {font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif; font-size: small; }' +\
     'table {    border: 1px solid lightgrey;    width: 100%;    border-collapse: collapse; }' +\
     'th {    border: 1px solid lightgrey;    background-color: #dddddd; text-align: left; }' +\
-    'td {    border-top: 1px solid lightgrey;    border-bottom: 1px solid lightgrey;    vertical-align: center; }' +\
+    'td {    border-top: 1px solid lightgrey;    border-bottom: 1px solid lightgrey;    vertical-align: middle; }' +\
     'tr:hover { background-color: #eff7fd; }' +\
     'tr:nth-child(even) { background-color: #f8f8f8 }    </style>'
 

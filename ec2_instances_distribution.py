@@ -38,7 +38,7 @@ def handler(event, context):
                                     aws_session_token=credentials['SessionToken'])
         account_id = sts_client.get_caller_identity().get('Account')
         regions = craws.get_region_descriptions()
-        region_count = len(regions)
+        total_count = len(regions)
         green_count = red_count = orange_count = yellow_count = grey_count = 0
 
         for region in regions:
@@ -86,7 +86,7 @@ def handler(event, context):
                 orange_count += 1
 
         results['Details'] = details
-        results['RegionCount'] = region_count
+        results['TotalCount'] = total_count
         results['GreenCount'] = green_count
         results['RedCount'] = red_count
         results['OrangeCount'] = orange_count
@@ -96,3 +96,5 @@ def handler(event, context):
         logger.info('Results for accout %s uploaded to s3', account_id)
 
     logger.debug('Ec2 Instances Distribution check finished')
+
+handler(None, None)

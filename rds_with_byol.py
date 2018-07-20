@@ -20,7 +20,7 @@ def handler(event, context):
         try:
             response = sts.assume_role(RoleArn=role_arn, RoleSessionName='RdsWithBYOL')
         except Exception as e:
-            logger.error(e.message)
+            logger.error(e)
             continue
         credentials = response['Credentials']
         # We need to get the sts client again, with the temp tokens. Otherwise any attempt to get the account id 
@@ -30,7 +30,7 @@ def handler(event, context):
                                     aws_session_token=credentials['SessionToken'])
         account_id = sts_client.get_caller_identity().get('Account')
         regions = craws.get_region_descriptions()
-        region_count = len(regions)
+        total_count = len(regions)
         green_count = red_count = orange_count = yellow_count = grey_count = 0
 
         for region in regions:
@@ -46,7 +46,7 @@ def handler(event, context):
                         result.append({'Instance ID':instance['DBInstanceIdentifier'], 'Name':instance['DBName'],
                             'Engine':instance['Engine'], 'Master Username':instance['MasterUsername']})
             except Exception as e:
-                logger.error(e.message)
+                logger.error(e)
                 # Exception occured, mark it as Grey (not checked)
                 details.append({'Region': region['Id'] + " (" + region['ShortName'] + ")", 'Status': craws.status['Grey'], 'Result': result})
                 grey_count += 1
@@ -61,7 +61,7 @@ def handler(event, context):
                 orange_count += 1
 
         results['Details'] = details
-        results['RegionCount'] = region_count
+        results['TotalCount'] = total_count
         results['GreenCount'] = green_count
         results['RedCount'] = red_count
         results['OrangeCount'] = orange_count
@@ -72,3 +72,4 @@ def handler(event, context):
 
     logger.debug('Rds With BYOL check finished')
 
+handler(None, None)

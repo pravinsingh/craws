@@ -8,7 +8,7 @@ import boto3
 import craws
 
 
-def lambda_handler(event, context):
+def handler(event, context):
     logger = craws.get_logger(name='UnusedElasticIps', level='DEBUG')
     logger.debug('Unused Elastic Ips check started')
     sts = boto3.client('sts')
@@ -29,7 +29,7 @@ def lambda_handler(event, context):
                                     aws_session_token=credentials['SessionToken'])
         account_id = sts_client.get_caller_identity().get('Account')
         regions = craws.get_region_descriptions()
-        region_count = len(regions)
+        total_count = len(regions)
         green_count = red_count = orange_count = yellow_count = grey_count = 0
 
         for region in regions:
@@ -66,7 +66,7 @@ def lambda_handler(event, context):
                 yellow_count += 1
 
         results['Details'] = details
-        results['RegionCount'] = region_count
+        results['TotalCount'] = total_count
         results['GreenCount'] = green_count
         results['RedCount'] = red_count
         results['OrangeCount'] = orange_count
@@ -77,6 +77,6 @@ def lambda_handler(event, context):
 
     logger.debug('Unused Elastic Ips check finished')
 
-lambda_handler(None, None)
+handler(None, None)
         
 
