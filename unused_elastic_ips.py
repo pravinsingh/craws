@@ -1,7 +1,7 @@
 """ This rule checks for any unattached Elastic IPs currently available.
 """
 
-__version__ = '0.1.0'
+__version__ = '0.2.0'
 __author__ = 'Pravin Singh'
 
 import boto3
@@ -15,6 +15,10 @@ def handler(event, context):
 
     for role_arn in craws.role_arns:
         results = {'Rule Name': 'Unused Elastic IPs'}
+        results['Area'] = 'EC2'
+        results['Description'] = 'Amazon Web Services enforce a small hourly charge if an Elastic IP (EIP) address within your ' +\
+            'account is not associated with a running EC2 instance or an Elastic Network Interface (ENI). We recommend releasing ' +\
+            'any unassociated EIPs that are no longer needed to reduce your AWS monthly costs.'
         details = []
         try:
             response = sts.assume_role(RoleArn=role_arn, RoleSessionName='UnusedElasticIps')

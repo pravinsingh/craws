@@ -1,7 +1,7 @@
 """ This rule checks whether MFA (Multi Factor Authentication) is enabled for all IAM users as well as the root account.
 """
 
-__version__ = '0.1.0'
+__version__ = '0.2.0'
 __author__ = 'Pravin Singh'
 
 import boto3
@@ -18,6 +18,10 @@ def handler(event, context):
     # Loop through all accounts
     for role_arn in craws.role_arns:
         results = {'Rule Name': 'MFA Not Enabled for all IAM users'}
+        results['Area'] = 'IAM'
+        results['Description'] = 'Having MFA-protected IAM users is the best way to protect your AWS resources and services against' +\
+            ' attackers. An MFA device signature adds an extra layer of protection on top of your existing IAM user credentials' +\
+            ' (username and password), making your AWS account virtually impossible to penetrate without the MFA generated passcode.'
         details = []
         try:
             response = sts.assume_role(RoleArn=role_arn, RoleSessionName='MfaNotEnabled')

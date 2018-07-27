@@ -1,7 +1,7 @@
 """ This rule ensures that the EC2 instances are evenly spread across all Availability Zones (AZs) within an AWS region.
 """
 
-__version__ = '0.1.0'
+__version__ = '0.2.0'
 __author__ = 'Pravin Singh'
 
 import boto3
@@ -24,6 +24,9 @@ def handler(event, context):
 
     for role_arn in craws.role_arns:
         results = {'Rule Name': 'EC2 Instances not distributed evenly across availability zones'}
+        results['Area'] = 'EC2'
+        results['Description'] = 'Having a balanced distribution of EC2 instances across all AZs in a region will improve the' +\
+            ' availability and reliability of your applications in case of an AWS planned or unplanned service disruption.'
         details = []
         try:
             response = sts.assume_role(RoleArn=role_arn, RoleSessionName='Ec2InstancesDistribution')

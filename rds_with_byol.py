@@ -1,7 +1,7 @@
 """ This rule checks for any RDS Instances with BYOL License Model.
 """
 
-__version__ = '0.1.0'
+__version__ = '0.2.0'
 __author__ = 'Pravin Singh'
 
 import boto3
@@ -16,6 +16,9 @@ def handler(event, context):
 
     for role_arn in craws.role_arns:
         results = {'Rule Name': 'RDS Instances with BYOL License Model'}
+        results['Area'] = 'RDS'
+        results['Description'] = 'Identify any Oracle RDS instances configured with Bring-Your-Own-License (BYOL) license model. ' +\
+            'We should always create Oracle RDS instances with License-Attached license model.'
         details = []
         try:
             response = sts.assume_role(RoleArn=role_arn, RoleSessionName='RdsWithBYOL')
