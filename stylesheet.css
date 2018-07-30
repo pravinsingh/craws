@@ -46,11 +46,11 @@ img {
     border-radius: 40%; 
     display: inline-block; 
 }
-.red-bar { background-color: #d00; height: 5px }
-.orange-bar { background-color: #f80; height: 5px }
-.yellow-bar { background-color: #fd0; height: 5px }
-.green-bar { background-color: #0c0; height: 5px }
-.grey-bar { background-color: #ccc; height: 5px }
+.red-bar { background-color: #d00; height: 5px; padding: 0px }
+.orange-bar { background-color: #f80; height: 5px; padding: 0px }
+.yellow-bar { background-color: #fd0; height: 5px; padding: 0px }
+.green-bar { background-color: #0c0; height: 5px; padding: 0px }
+.grey-bar { background-color: #ccc; height: 5px; padding: 0px }
 h1, h4 {text-align: center; margin: 2px;}
 table { font-size: small; border: 1px solid lightgrey; width: 100%; border-collapse: collapse; }
 th { border: 1px solid lightgrey; background-color: peachpuff; text-align: left; }

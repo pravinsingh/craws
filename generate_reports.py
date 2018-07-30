@@ -1,7 +1,7 @@
 """ Goes through all the results in the s3 bucket, generates a consolidated report and uploads it back to s3.
 """
 
-__version__ = '0.1.0'
+__version__ = '0.2.0'
 __author__ = 'Pravin Singh'
 
 import boto3
@@ -10,25 +10,38 @@ import json
 import craws
 from json2html import json2html
 
-def get_result_html(key, s3_client):
-    """ Return the html formatted output of compliance check result that can be used as the email body or saved as an html page.\n
-        ``result_file``: Name (key) of the json file to convert. It should contain the full path inside the bucket.
+def get_result(key, s3_client):
+    """ Get the html section for a rule's result json file.\n
+        ``key``: Name (key) of the json file to convert. It should contain the full path inside the bucket.
     """
     response = s3_client.get_object(Bucket = craws.bucket, Key = key)
     result = json.loads(response['Body'].read())
     details = json2html.convert(result['Details'], escape=False)
     area = str(result['Area']).upper()
-    text = '<img src="../../res/' + area + '.png"><div class="area">' + area + '</div><div class="collapsible">' +\
-         result['Rule Name'] + '<table style="float:right; width: 100px; margin-right: 15px; margin-top: 6px;">' +\
-        '<tr><td class="green-bar" width="90px"></td><td class="yellow-bar" width="10px"></td></tr></table></div><div class="content">' +\
+    green = int(result['GreenCount'])*100/int(result['TotalCount'])
+    red = int(result['RedCount'])*100/int(result['TotalCount'])
+    orange = int(result['OrangeCount'])*100/int(result['TotalCount'])
+    yellow = int(result['YellowCount'])*100/int(result['TotalCount'])
+    grey = int(result['GreyCount'])*100/int(result['TotalCount'])
+
+    heading = '<img src="../../res/' + area + '.png"><div class="area">' + area + '</div>'
+    content = '<div class="collapsible">' + result['Rule Name'] +\
+        '<table style="float:right; width: 100px; margin-right: 15px; margin-top: 6px;">' +\
+        '<tr><td class="green-bar" width="' + str(green) + '%"></td>' +\
+        '<td class="red-bar" width="' + str(red) + '%"></td>' +\
+        '<td class="orange-bar" width="' + str(orange) + '%"></td>' +\
+        '<td class="yellow-bar" width="' + str(yellow) + '%"></td>' +\
+        '<td class="grey-bar" width="' + str(grey) + '%"></td></tr></table></div><div class="content">' +\
         '<div class="description">' + result['Description'] + '</div>' + details + '</div>'
-    return text
+    return heading, content
 
 def generate_report(key, s3_client, logger):
+    """ Generate a report for an account, combining all the results
+    """
     account_id = key[key.find('/')+1:key.rfind('/')]
     date = str(datetime.datetime.now().date())
     head = '\n<head><title>CRAWS Results - ' + account_id + '</title>\n</head>\n'
-    html = '<html>' + head + '<body>\n<h1>CRAWS Results</h1>\n<h4>(Compliance Reporting for AWS)</h4>\n' +\
+    report = '<html>' + head + '<body>\n<h1>CRAWS Results</h1>\n<h4>(Compliance Reporting for AWS)</h4>\n' +\
         '<table class="header"><tr class="header"><td class="header">Date: <b>' + date +\
         '</b></td><td class="header">Account: <b>' + account_id + '</b></td><td style="border: none; width: 250px">' +\
         '<button id="toggleBtn" onclick="toggleAll()" height="30px" >Expand All</button></td></tr></table>\n'
@@ -38,14 +51,25 @@ def generate_report(key, s3_client, logger):
             key = result_file['Key']
             if key.endswith('/') or key.endswith('.html'):
                 continue
-            html += get_result_html(key, s3_client)
-        html += '\n<script src="../../res/script.js"></script>\n' +\
+            heading, content = get_result(key, s3_client)
+
+            # If this result's area is already present in the report, insert the result there, otherwise create a new section
+            # at the bottom
+            if heading in report:
+                index = report.find(heading) + len(heading)
+                report = report[:index] + content + report[index:]
+            else:
+                report = report + heading + content
+
+        report += '\n<script src="../../res/script.js"></script>\n' +\
             '<link rel="stylesheet" type="text/css" href="../../res/stylesheet.css">\n</body>\n</html>'
     except Exception as e:
         logger.error(e)
-    return html
+    return report
 
 def handler(event, context):
+    """ Loop through all accounts and generate a report for every account
+    """
     logger = craws.get_logger(name='GenerateReports', level='DEBUG')
     logger.debug('Generating Reports started')
     # Creates an s3 client with the role 'crawsExecution', since 'crawsExecution' is the only role with write access to 
