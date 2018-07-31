@@ -1,7 +1,7 @@
 """ This rule checks for any RDS Instances with BYOL License Model.
 """
 
-__version__ = '0.2.0'
+__version__ = '0.3.0'
 __author__ = 'Pravin Singh'
 
 import boto3
@@ -33,7 +33,6 @@ def handler(event, context):
                                     aws_session_token=credentials['SessionToken'])
         account_id = sts_client.get_caller_identity().get('Account')
         regions = craws.get_region_descriptions()
-        total_count = len(regions)
         green_count = red_count = orange_count = yellow_count = grey_count = 0
 
         for region in regions:
@@ -48,6 +47,10 @@ def handler(event, context):
                     if instance['LicenseModel'] is 'bring-your-own-license':
                         result.append({'Instance ID':instance['DBInstanceIdentifier'], 'Name':instance['DBName'],
                             'Engine':instance['Engine'], 'Master Username':instance['MasterUsername']})
+                        orange_count += 1
+                    else:
+                        green_count += 1
+                        
             except Exception as e:
                 logger.error(e)
                 # Exception occured, mark it as Grey (not checked)
@@ -57,14 +60,11 @@ def handler(event, context):
             if len(result) == 0:
                 # All good, mark it as Green
                 details.append({'Region': region['Id'] + " (" + region['ShortName'] + ")", 'Status': craws.status['Green'], 'Result': result})
-                green_count += 1
             else:
                 # Some issues found, mark it as Red/Orange/Yellow depending on this check's risk level
                 details.append({'Region': region['Id'] + " (" + region['ShortName'] + ")", 'Status': craws.status['Red'], 'Result': result})
-                orange_count += 1
 
         results['Details'] = details
-        results['TotalCount'] = total_count
         results['GreenCount'] = green_count
         results['RedCount'] = red_count
         results['OrangeCount'] = orange_count
@@ -75,4 +75,3 @@ def handler(event, context):
 
     logger.debug('Rds With BYOL check finished')
 
-handler(None, None)

@@ -1,7 +1,7 @@
 """ Goes through all the results in the s3 bucket, generates a consolidated report and uploads it back to s3.
 """
 
-__version__ = '0.2.0'
+__version__ = '0.3.0'
 __author__ = 'Pravin Singh'
 
 import boto3
@@ -18,11 +18,18 @@ def get_result(key, s3_client):
     result = json.loads(response['Body'].read())
     details = json2html.convert(result['Details'], escape=False)
     area = str(result['Area']).upper()
-    green = int(result['GreenCount'])*100/int(result['TotalCount'])
-    red = int(result['RedCount'])*100/int(result['TotalCount'])
-    orange = int(result['OrangeCount'])*100/int(result['TotalCount'])
-    yellow = int(result['YellowCount'])*100/int(result['TotalCount'])
-    grey = int(result['GreyCount'])*100/int(result['TotalCount'])
+    total = (int(result['GreenCount']) + int(result['RedCount']) + int(result['OrangeCount']) +
+            int(result['YellowCount']) + int(result['GreyCount']))
+    # If there are no results, it's considered Green
+    if total == 0:
+        green = 100
+        red = orange = yellow = grey = 0
+    else:
+        green = int(result['GreenCount'])*100/total
+        red = int(result['RedCount'])*100/total
+        orange = int(result['OrangeCount'])*100/total
+        yellow = int(result['YellowCount'])*100/total
+        grey = int(result['GreyCount'])*100/total
 
     heading = '<img src="../../res/' + area + '.png"><div class="area">' + area + '</div>'
     content = '<div class="collapsible">' + result['Rule Name'] +\

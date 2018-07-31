@@ -1,7 +1,7 @@
 """ This rule checks whether MFA (Multi Factor Authentication) is enabled for all IAM users as well as the root account.
 """
 
-__version__ = '0.2.0'
+__version__ = '0.3.0'
 __author__ = 'Pravin Singh'
 
 import boto3
@@ -42,16 +42,13 @@ def handler(event, context):
                                     aws_secret_access_key=credentials['SecretAccessKey'], 
                                     aws_session_token=credentials['SessionToken'])
         try:
-            response = iam_client.generate_credential_report()
-            while (response['State'] != 'COMPLETE'):
+            while (iam_client.generate_credential_report()['State'] != 'COMPLETE'):
                 time.sleep(1)
             response = iam_client.get_credential_report()
             report_csv = response['Content']
             reader = csv.DictReader(report_csv.splitlines())
-            total_count = 0
             for row in reader:
                 try:
-                    total_count += 1
                     if row['user'] == '<root_account>':
                         row['user'] = '&lt;root_account&gt;'
                     if row['mfa_active'] == 'false':
@@ -73,7 +70,6 @@ def handler(event, context):
             grey_count += 1
 
         results['Details'] = details
-        results['TotalCount'] = total_count
         results['GreenCount'] = green_count
         results['RedCount'] = red_count
         results['OrangeCount'] = orange_count
@@ -84,4 +80,3 @@ def handler(event, context):
 
     logger.debug('MFA Not Enabled check finished')
 
-handler(None, None)

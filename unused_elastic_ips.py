@@ -1,7 +1,7 @@
 """ This rule checks for any unattached Elastic IPs currently available.
 """
 
-__version__ = '0.2.0'
+__version__ = '0.3.0'
 __author__ = 'Pravin Singh'
 
 import boto3
@@ -33,7 +33,6 @@ def handler(event, context):
                                     aws_session_token=credentials['SessionToken'])
         account_id = sts_client.get_caller_identity().get('Account')
         regions = craws.get_region_descriptions()
-        total_count = len(regions)
         green_count = red_count = orange_count = yellow_count = grey_count = 0
 
         for region in regions:
@@ -45,7 +44,9 @@ def handler(event, context):
                 result = []
                 response = ec2_client.describe_addresses()
                 for address in response['Addresses']:
-                    if 'AssociationId' not in address:
+                    if 'AssociationId' in address:
+                        green_count += 1
+                    else:
                         name = ''
                         if 'Tags' in address:
                             for tag in address['Tags']:
@@ -54,6 +55,7 @@ def handler(event, context):
                                     break
 
                         result.append({'Elastic IP':address['PublicIp'], 'Name':name})
+                        yellow_count += 1
             except Exception as e:
                 logger.error(e.message)
                 # Exception occured, mark it as Grey (not checked)
@@ -63,14 +65,11 @@ def handler(event, context):
             if len(result) == 0:
                 # All good, mark it as Green
                 details.append({'Region': region['Id'] + " (" + region['ShortName'] + ")", 'Status': craws.status['Green'], 'Result': result})
-                green_count += 1
             else:
                 # Some issues found, mark it as Red/Orange/Yellow depending on this check's risk level
                 details.append({'Region': region['Id'] + " (" + region['ShortName'] + ")", 'Status': craws.status['Yellow'], 'Result': result})
-                yellow_count += 1
 
         results['Details'] = details
-        results['TotalCount'] = total_count
         results['GreenCount'] = green_count
         results['RedCount'] = red_count
         results['OrangeCount'] = orange_count
@@ -81,6 +80,6 @@ def handler(event, context):
 
     logger.debug('Unused Elastic Ips check finished')
 
-handler(None, None)
+
         
 

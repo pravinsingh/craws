@@ -1,7 +1,7 @@
 """ Goes through all the results in the s3 bucket and sends emails to intended recipients.
 """
 
-__version__ = '0.2.0'
+__version__ = '0.3.0'
 __author__ = 'Pravin Singh'
 
 import boto3
@@ -25,11 +25,18 @@ def get_email_body(account_id, s3_client, logger):
                 result_url = '{}/{}/{}'.format('https://s3-eu-west-1.amazonaws.com', craws.bucket, key)
                 continue
             result = craws.get_result_json(key)
-            green = int(result['GreenCount'])*100/int(result['TotalCount'])
-            red = int(result['RedCount'])*100/int(result['TotalCount'])
-            orange = int(result['OrangeCount'])*100/int(result['TotalCount'])
-            yellow = int(result['YellowCount'])*100/int(result['TotalCount'])
-            grey = int(result['GreyCount'])*100/int(result['TotalCount'])
+            total = (int(result['GreenCount']) + int(result['RedCount']) + int(result['OrangeCount']) +
+                    int(result['YellowCount']) + int(result['GreyCount']))
+            # If there are no results, it's considered Green
+            if total == 0:
+                green = 100
+                red = orange = yellow = grey = 0
+            else:
+                green = int(result['GreenCount'])*100/total
+                red = int(result['RedCount'])*100/total
+                orange = int(result['OrangeCount'])*100/total
+                yellow = int(result['YellowCount'])*100/total
+                grey = int(result['GreyCount'])*100/total
             email_body += '<tr><td>' + result['Rule Name'] + '</td><td><table style="border-collapse:collapse"><tr>'
             if green > 0:
                 email_body += '<td class="green-bar" width="' + str(green) + '%"></td>'
