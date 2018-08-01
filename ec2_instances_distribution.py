@@ -1,7 +1,7 @@
 """ This rule ensures that the EC2 instances are evenly spread across all Availability Zones (AZs) within an AWS region.
 """
 
-__version__ = '0.2.0'
+__version__ = '0.2.1'
 __author__ = 'Pravin Singh'
 
 import boto3
@@ -76,16 +76,16 @@ def handler(event, context):
             except Exception as e:
                 logger.error(e)
                 # Exception occured, mark it as Grey (not checked)
-                details.append({'Region': region['Id'] + " (" + region['ShortName'] + ")", 'Status': craws.status['Grey'], 'Result': result})
+                details.append({'Status': craws.status['Grey'], 'Region': region['Id'] + " (" + region['ShortName'] + ")", 'Result': result})
                 grey_count += 1
 
             if len(result) == 0:
                 # All good, mark it as Green
-                details.append({'Region': region['Id'] + " (" + region['ShortName'] + ")", 'Status': craws.status['Green'], 'Result': result})
+                details.append({'Status': craws.status['Green'], 'Region': region['Id'] + " (" + region['ShortName'] + ")", 'Result': result})
                 green_count += 1
             else:
                 # Some issues found, mark it as Red/Orange/Yellow depending on this check's risk level
-                details.append({'Region': region['Id'] + " (" + region['ShortName'] + ")", 'Status': craws.status['Orange'], 'Result': result})
+                details.append({'Status': craws.status['Orange'], 'Region': region['Id'] + " (" + region['ShortName'] + ")", 'Result': result})
                 orange_count += 1
 
         results['Details'] = details

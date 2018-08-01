@@ -1,7 +1,7 @@
 """ This rule checks whether MFA (Multi Factor Authentication) is enabled for all IAM users as well as the root account.
 """
 
-__version__ = '0.3.0'
+__version__ = '0.3.1'
 __author__ = 'Pravin Singh'
 
 import boto3
@@ -45,7 +45,7 @@ def handler(event, context):
             while (iam_client.generate_credential_report()['State'] != 'COMPLETE'):
                 time.sleep(1)
             response = iam_client.get_credential_report()
-            report_csv = response['Content']
+            report_csv = response['Content'].decode()
             reader = csv.DictReader(report_csv.splitlines())
             for row in reader:
                 try:
@@ -53,16 +53,16 @@ def handler(event, context):
                         row['user'] = '&lt;root_account&gt;'
                     if row['mfa_active'] == 'false':
                         # Some issues found, mark it as Red/Orange/Yellow depending on this check's risk level
-                        details.append({'User Name': row['user'], 'ARN': row['arn'], 'Status': craws.status['Red']})
+                        details.append({'Status': craws.status['Red'], 'User Name': row['user'], 'ARN': row['arn']})
                         red_count += 1
                     else:
                         # All good, mark it as Green
-                        details.append({'User Name': row['user'], 'ARN': row['arn'], 'Status': craws.status['Green']})
+                        details.append({'Status': craws.status['Green'], 'User Name': row['user'], 'ARN': row['arn']})
                         green_count += 1
                 except Exception as e:
                     logger.error(e)
                     # Exception occured, mark it as Grey (not checked)
-                    details.append({'User Name': row['user'], 'ARN': row['arn'], 'Status': craws.status['Grey']})
+                    details.append({'Status': craws.status['Grey'], 'User Name': row['user'], 'ARN': row['arn']})
                     grey_count += 1
         except Exception as e:
             logger.error(e)

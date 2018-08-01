@@ -1,7 +1,7 @@
 """ This rule checks for any RDS Instances with BYOL License Model.
 """
 
-__version__ = '0.3.0'
+__version__ = '0.3.1'
 __author__ = 'Pravin Singh'
 
 import boto3
@@ -54,15 +54,15 @@ def handler(event, context):
             except Exception as e:
                 logger.error(e)
                 # Exception occured, mark it as Grey (not checked)
-                details.append({'Region': region['Id'] + " (" + region['ShortName'] + ")", 'Status': craws.status['Grey'], 'Result': result})
+                details.append({'Status': craws.status['Grey'], 'Region': region['Id'] + " (" + region['ShortName'] + ")", 'Result': result})
                 grey_count += 1
 
             if len(result) == 0:
                 # All good, mark it as Green
-                details.append({'Region': region['Id'] + " (" + region['ShortName'] + ")", 'Status': craws.status['Green'], 'Result': result})
+                details.append({'Status': craws.status['Green'], 'Region': region['Id'] + " (" + region['ShortName'] + ")", 'Result': result})
             else:
                 # Some issues found, mark it as Red/Orange/Yellow depending on this check's risk level
-                details.append({'Region': region['Id'] + " (" + region['ShortName'] + ")", 'Status': craws.status['Red'], 'Result': result})
+                details.append({'Status': craws.status['Red'], 'Region': region['Id'] + " (" + region['ShortName'] + ")", 'Result': result})
 
         results['Details'] = details
         results['GreenCount'] = green_count
