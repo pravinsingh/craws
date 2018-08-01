@@ -57,7 +57,7 @@ def handler(event, context):
                         result.append({'Elastic IP':address['PublicIp'], 'Name':name})
                         yellow_count += 1
             except Exception as e:
-                logger.error(e.message)
+                logger.error(e)
                 # Exception occured, mark it as Grey (not checked)
                 details.append({'Region': region['Id'] + " (" + region['ShortName'] + ")", 'Status': craws.status['Grey'], 'Result': result})
                 grey_count += 1

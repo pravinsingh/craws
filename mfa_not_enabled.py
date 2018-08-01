@@ -1,7 +1,7 @@
 """ This rule checks whether MFA (Multi Factor Authentication) is enabled for all IAM users as well as the root account.
 """
 
-__version__ = '0.3.0'
+__version__ = '0.3.1'
 __author__ = 'Pravin Singh'
 
 import boto3
@@ -45,7 +45,7 @@ def handler(event, context):
             while (iam_client.generate_credential_report()['State'] != 'COMPLETE'):
                 time.sleep(1)
             response = iam_client.get_credential_report()
-            report_csv = response['Content']
+            report_csv = response['Content'].decode()
             reader = csv.DictReader(report_csv.splitlines())
             for row in reader:
                 try:
