@@ -1,7 +1,7 @@
 """ This rule checks for any unattached Elastic IPs currently available.
 """
 
-__version__ = '0.3.0'
+__version__ = '0.4.0'
 __author__ = 'Pravin Singh'
 
 import boto3
@@ -13,7 +13,7 @@ def handler(event, context):
     logger.debug('Unused Elastic Ips check started')
     sts = boto3.client('sts')
 
-    for role_arn in craws.role_arns:
+    for account in craws.accounts:
         results = {'Rule Name': 'Unused Elastic IPs'}
         results['Area'] = 'EC2'
         results['Description'] = 'Amazon Web Services enforce a small hourly charge if an Elastic IP (EIP) address within your ' +\
@@ -21,17 +21,11 @@ def handler(event, context):
             'any unassociated EIPs that are no longer needed to reduce your AWS monthly costs.'
         details = []
         try:
-            response = sts.assume_role(RoleArn=role_arn, RoleSessionName='UnusedElasticIps')
+            response = sts.assume_role(RoleArn=account['role_arn'], RoleSessionName='UnusedElasticIps')
         except Exception as e:
             logger.error(e)
             continue
         credentials = response['Credentials']
-        # We need to get the sts client again, with the temp tokens. Otherwise any attempt to get the account id 
-        # will return the account id of the original caller and not the account id of the assumed role.
-        sts_client = boto3.client('sts', aws_access_key_id=credentials['AccessKeyId'], 
-                                    aws_secret_access_key=credentials['SecretAccessKey'], 
-                                    aws_session_token=credentials['SessionToken'])
-        account_id = sts_client.get_caller_identity().get('Account')
         regions = craws.get_region_descriptions()
         green_count = red_count = orange_count = yellow_count = grey_count = 0
 
@@ -75,8 +69,8 @@ def handler(event, context):
         results['OrangeCount'] = orange_count
         results['YellowCount'] = yellow_count
         results['GreyCount'] = grey_count
-        craws.upload_result_json(results, 'UnusedElasticIps.json', account_id)
-        logger.info('Results for accout %s uploaded to s3', account_id)
+        craws.upload_result_json(results, 'UnusedElasticIps.json', account['account_id'])
+        logger.info('Results for accout %s uploaded to s3', account['account_id'])
 
     logger.debug('Unused Elastic Ips check finished')
 

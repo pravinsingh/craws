@@ -1,7 +1,7 @@
 """ Goes through all the results in the s3 bucket, generates a consolidated report and uploads it back to s3.
 """
 
-__version__ = '0.3.0'
+__version__ = '0.4.0'
 __author__ = 'Pravin Singh'
 
 import boto3
@@ -46,11 +46,12 @@ def generate_report(key, s3_client, logger):
     """ Generate a report for an account, combining all the results
     """
     account_id = key[key.find('/')+1:key.rfind('/')]
+    display_name = craws.get_account_name(account_id)
     date = str(datetime.datetime.now().date())
-    head = '\n<head><title>CRAWS Results - ' + account_id + '</title>\n</head>\n'
-    report = '<html>' + head + '<body>\n<h1>CRAWS Results</h1>\n<h4>(Compliance Reporting for AWS)</h4>\n' +\
-        '<table class="header"><tr class="header"><td class="header">Date: <b>' + date +\
-        '</b></td><td class="header">Account: <b>' + account_id + '</b></td><td style="border: none; width: 250px">' +\
+    head = '\n<head><title>CRAWS Results - ' + display_name + '</title>\n</head>\n'
+    report = '<html>' + head + '<body>\n<img class="logo" src="../../res/tibco-logo.png"><h1>CRAWS</h1>\n' +\
+        '<h4>Compliance Reporting for AWS</h4>\n<table class="header"><tr class="header"><td class="header">Date: <b>' + date + '</b></td>' +\
+        '<td class="header">Account: <b>' + display_name + ' (' + account_id + ')' + '</b></td><td style="border: none; width: 250px">' +\
         '<button id="toggleBtn" onclick="toggleAll()" height="30px" >Expand All</button></td></tr></table>\n'
     try:
         response = s3_client.list_objects(Bucket = craws.bucket, Prefix = key)
@@ -80,7 +81,7 @@ def handler(event, context):
     logger = craws.get_logger(name='GenerateReports', level='DEBUG')
     logger.debug('Generating Reports started')
     # Creates an s3 client with the role 'crawsExecution', since 'crawsExecution' is the only role with write access to 
-    # our s3 bucket and permission to send emails.
+    # our s3 bucket.
     sts = boto3.client('sts')
     response = sts.assume_role(RoleArn='arn:aws:iam::926760075421:role/crawsExecution', RoleSessionName='GenerateReports')
     s3_client = boto3.client('s3', aws_access_key_id=response['Credentials']['AccessKeyId'], 

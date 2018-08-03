@@ -1,7 +1,7 @@
 """ Base module for project Craws that is used in all compliance-rule implementations.
 """
 
-__version__ = '0.2.0'
+__version__ = '0.3.0'
 __author__ = 'Pravin Singh'
 
 import boto3
@@ -11,6 +11,18 @@ import logging
 from json2html import json2html
 from pkg_resources import resource_filename
 
+_sts_client = boto3.client('sts')
+# Create an s3 client with the role 'crawsExecution', since 'crawsExecution' is the only role with write access to our s3 bucket.
+_response = _sts_client.assume_role(RoleArn='arn:aws:iam::926760075421:role/crawsExecution', RoleSessionName='craws')
+_s3_client = boto3.client('s3', aws_access_key_id=_response['Credentials']['AccessKeyId'], 
+                            aws_secret_access_key=_response['Credentials']['SecretAccessKey'], 
+                            aws_session_token=_response['Credentials']['SessionToken'])
+_ec2_client = boto3.client('ec2', aws_access_key_id=_response['Credentials']['AccessKeyId'], 
+                            aws_secret_access_key=_response['Credentials']['SecretAccessKey'], 
+                            aws_session_token=_response['Credentials']['SessionToken'])
+_ssm_client = boto3.client('ssm')
+_response = _ssm_client.get_parameter(Name='craws-accounts')
+
 """ Name of the bucket in s3 that stores all the results
 """
 bucket = 'craws'
@@ -18,8 +30,7 @@ bucket = 'craws'
 """ Role ARNs for all accounts against which the compliance rules are to be run. The roles should have read access in their
     respective accounts and should have the role crawsExecution (arn:aws:iam::926760075421:role/crawsExecution) as a trusted entity.
 """
-role_arns = ['arn:aws:iam::013185853748:role/cloudops-mdm-prod-craws',
-              'arn:aws:iam::926760075421:role/crawsReadOnly']
+accounts = json.loads(_response['Parameter']['Value'])
 
 """ Traffic light symbols used to show against the results of every region. If the check did not run for a region due to an
     exception, mark that region as 'Grey' during the exception handling.
@@ -31,15 +42,21 @@ status = {  'Red': '<span class="red-dot"></span> Issues - Critical ',
             'Grey': '<span class="grey-dot"></span> Not Checked '}
 
 
-_sts = boto3.client('sts')
-# Create an s3 client with the role 'crawsExecution', since 'crawsExecution' is the only role with write access to our s3 bucket.
-_response = _sts.assume_role(RoleArn='arn:aws:iam::926760075421:role/crawsExecution', RoleSessionName='UnusedElasticIps')
-_s3_client = boto3.client('s3', aws_access_key_id=_response['Credentials']['AccessKeyId'], 
-                            aws_secret_access_key=_response['Credentials']['SecretAccessKey'], 
-                            aws_session_token=_response['Credentials']['SessionToken'])
-_ec2_client = boto3.client('ec2', aws_access_key_id=_response['Credentials']['AccessKeyId'], 
-                            aws_secret_access_key=_response['Credentials']['SecretAccessKey'], 
-                            aws_session_token=_response['Credentials']['SessionToken'])
+def get_account_name(account_id):
+    """ Get the display name of the account
+    """
+    for account in accounts:
+        if account['account_id'] == account_id:
+            return account['display_name']
+    return ''
+
+def get_account_emails(account_id):
+    """ Get the email addresses the account report should go to
+    """
+    for account in accounts:
+        if account['account_id'] == account_id:
+            return account['emails']
+    return []
 
 def _create_folder(account_id):
     try:

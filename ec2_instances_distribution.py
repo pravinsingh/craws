@@ -1,7 +1,7 @@
 """ This rule ensures that the EC2 instances are evenly spread across all Availability Zones (AZs) within an AWS region.
 """
 
-__version__ = '0.2.0'
+__version__ = '0.3.0'
 __author__ = 'Pravin Singh'
 
 import boto3
@@ -22,24 +22,18 @@ def handler(event, context):
     logger.debug('Ec2 Instances Distribution check started')
     sts = boto3.client('sts')
 
-    for role_arn in craws.role_arns:
+    for account in craws.accounts:
         results = {'Rule Name': 'EC2 Instances not distributed evenly across availability zones'}
         results['Area'] = 'EC2'
         results['Description'] = 'Having a balanced distribution of EC2 instances across all AZs in a region will improve the' +\
             ' availability and reliability of your applications in case of an AWS planned or unplanned service disruption.'
         details = []
         try:
-            response = sts.assume_role(RoleArn=role_arn, RoleSessionName='Ec2InstancesDistribution')
+            response = sts.assume_role(RoleArn=account['role_arn'], RoleSessionName='Ec2InstancesDistribution')
         except Exception as e:
             logger.error(e)
             continue
         credentials = response['Credentials']
-        # We need to get the sts client again, with the temp tokens. Otherwise any attempt to get the account id 
-        # will return the account id of the original caller and not the account id of the assumed role.
-        sts_client = boto3.client('sts', aws_access_key_id=credentials['AccessKeyId'], 
-                                    aws_secret_access_key=credentials['SecretAccessKey'], 
-                                    aws_session_token=credentials['SessionToken'])
-        account_id = sts_client.get_caller_identity().get('Account')
         regions = craws.get_region_descriptions()
         total_count = len(regions)
         green_count = red_count = orange_count = yellow_count = grey_count = 0
@@ -95,9 +89,8 @@ def handler(event, context):
         results['OrangeCount'] = orange_count
         results['YellowCount'] = yellow_count
         results['GreyCount'] = grey_count
-        craws.upload_result_json(results, 'Ec2InstancesDistribution.json', account_id)
-        logger.info('Results for accout %s uploaded to s3', account_id)
+        craws.upload_result_json(results, 'Ec2InstancesDistribution.json', account['account_id'])
+        logger.info('Results for accout %s uploaded to s3', account['account_id'])
 
     logger.debug('Ec2 Instances Distribution check finished')
 
-handler(None, None)

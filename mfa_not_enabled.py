@@ -1,7 +1,7 @@
 """ This rule checks whether MFA (Multi Factor Authentication) is enabled for all IAM users as well as the root account.
 """
 
-__version__ = '0.3.1'
+__version__ = '0.4.0'
 __author__ = 'Pravin Singh'
 
 import boto3
@@ -16,25 +16,19 @@ def handler(event, context):
     sts = boto3.client('sts')
 
     # Loop through all accounts
-    for role_arn in craws.role_arns:
-        results = {'Rule Name': 'MFA Not Enabled for all IAM users'}
+    for account in craws.accounts:
+        results = {'Rule Name': 'MFA Not Enabled'}
         results['Area'] = 'IAM'
         results['Description'] = 'Having MFA-protected IAM users is the best way to protect your AWS resources and services against' +\
-            ' attackers. An MFA device signature adds an extra layer of protection on top of your existing IAM user credentials' +\
-            ' (username and password), making your AWS account virtually impossible to penetrate without the MFA generated passcode.'
+            ' attackers. An MFA device signature adds an extra layer of protection on top of your existing IAM user credentials.' +\
+            ' NOTE: This rule only validates MFA for console users, it does not validate the non-console users (e.g. SES users).'
         details = []
         try:
-            response = sts.assume_role(RoleArn=role_arn, RoleSessionName='MfaNotEnabled')
+            response = sts.assume_role(RoleArn=account['role_arn'], RoleSessionName='MfaNotEnabled')
         except Exception as e:
             logger.error(e)
             continue
         credentials = response['Credentials']
-        # We need to get the sts client again, with the temp tokens. Otherwise any attempt to get the account id 
-        # will return the account id of the original caller and not the account id of the assumed role.
-        sts_client = boto3.client('sts', aws_access_key_id=credentials['AccessKeyId'], 
-                                    aws_secret_access_key=credentials['SecretAccessKey'], 
-                                    aws_session_token=credentials['SessionToken'])
-        account_id = sts_client.get_caller_identity().get('Account')
         green_count = red_count = orange_count = yellow_count = grey_count = 0
 
         iam_client = boto3.client('iam', 
@@ -51,10 +45,15 @@ def handler(event, context):
                 try:
                     if row['user'] == '<root_account>':
                         row['user'] = '&lt;root_account&gt;'
+                    # Some issues found, mark it as Red/Orange/Yellow depending on this check's risk level
                     if row['mfa_active'] == 'false':
-                        # Some issues found, mark it as Red/Orange/Yellow depending on this check's risk level
-                        details.append({'User Name': row['user'], 'ARN': row['arn'], 'Status': craws.status['Red']})
-                        red_count += 1
+                        # Ignore the non-console users and show them as Grey
+                        if row['password_enabled'] == 'false':
+                            details.append({'User Name': row['user'], 'ARN': row['arn'], 'Status': craws.status['Grey']})
+                            grey_count += 1
+                        else:
+                            details.append({'User Name': row['user'], 'ARN': row['arn'], 'Status': craws.status['Red']})
+                            red_count += 1
                     else:
                         # All good, mark it as Green
                         details.append({'User Name': row['user'], 'ARN': row['arn'], 'Status': craws.status['Green']})
@@ -75,8 +74,8 @@ def handler(event, context):
         results['OrangeCount'] = orange_count
         results['YellowCount'] = yellow_count
         results['GreyCount'] = grey_count
-        craws.upload_result_json(results, 'MfaNotEnabled.json', account_id)
-        logger.info('Results for accout %s uploaded to s3', account_id)
+        craws.upload_result_json(results, 'MfaNotEnabled.json', account['account_id'])
+        logger.info('Results for accout %s uploaded to s3', account['account_id'])
 
     logger.debug('MFA Not Enabled check finished')
 

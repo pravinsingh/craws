@@ -8,6 +8,12 @@ img {
     float: left;
     margin: 10px;
 }
+.logo {
+    width: 124px; 
+    height: 44px;
+    float: left; 
+    margin: 5px;
+}
 .red-dot { 
     height: 15px; width: 15px; 
     background-color: #d00; 
