@@ -27,8 +27,19 @@ _response = _ssm_client.get_parameter(Name='craws-accounts')
 """
 bucket = 'craws'
 
-""" Role ARNs for all accounts against which the compliance rules are to be run. The roles should have read access in their
-    respective accounts and should have the role crawsExecution (arn:aws:iam::926760075421:role/crawsExecution) as a trusted entity.
+""" Accounts that CRAWS has to analyze. It has the following structure:\n
+[
+    {
+        'account_id': 'string',
+        'display_name': 'string',
+        'role_arn':'string',
+        'emails': ['list']
+    },
+]
+``display_name``: The common name this account is referred to as.
+``role_arn``: The role that will be used to run the analysis. This role should have read access in its accounts and should \
+have the role crawsExecution (arn:aws:iam::926760075421:role/crawsExecution) as a trusted entity.
+``emails``: Recipients of the report. It's a list of comma separated values.
 """
 accounts = json.loads(_response['Parameter']['Value'])
 
