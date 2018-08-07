@@ -1,7 +1,7 @@
 """ This rule checks resources for any unrestriced access.
 """
 
-__version__ = '0.2.0'
+__version__ = '0.3.0'
 __author__ = 'Bhupender Kumar'
 import boto3
 import craws
@@ -17,7 +17,7 @@ def handler(event, context):
     
     protocol_name = { 22: 'SSH', 53: 'DNS', 21: 'FTP', 23: 'Telnet', 65535: 'All TCP' }
 
-    for role_arn in craws.role_arns:
+    for account in craws.accounts:
         results = {'Rule Name': 'Security groups with unrestriced access'}
         results['Area'] = 'EC2'
         results['Description'] = 'Check your EC2 security groups for inbound rules that allow unrestricted access (i.e. 0.0.0.0/0)'  +\
@@ -25,19 +25,12 @@ def handler(event, context):
             ' the principle of least privilege and reduce the possibility of a breach.'
         details = []
         try:
-            response = sts.assume_role(RoleArn=role_arn, RoleSessionName='UnrestrictedAccess')
+            response = sts.assume_role(RoleArn=account['role_arn'], RoleSessionName='UnrestrictedAccess')
         except Exception as e:
             logger.error(e)
             continue
         credentials = response['Credentials']
-        # We need to get the sts client again, with the temp tokens. Otherwise any attempt to get the account id 
-        # will return the account id of the original caller and not the account id of the assumed role.
-        sts_client = boto3.client('sts', aws_access_key_id=credentials['AccessKeyId'], 
-                                    aws_secret_access_key=credentials['SecretAccessKey'], 
-                                    aws_session_token=credentials['SessionToken'])
-        account_id = sts_client.get_caller_identity().get('Account')
         regions = craws.get_region_descriptions()
-        total_count = len(regions)
         green_count = red_count = orange_count = yellow_count = grey_count = 0
 
         for region in regions:
@@ -85,7 +78,7 @@ def handler(event, context):
         results['OrangeCount'] = orange_count
         results['YellowCount'] = yellow_count
         results['GreyCount'] = grey_count
-        craws.upload_result_json(results, 'UnrestrictedAccess.json', account_id)
-        logger.info('Results for account %s uploaded to s3', account_id)
+        craws.upload_result_json(results, 'UnrestrictedAccess.json', account['account_id'])
+        logger.info('Results for account %s uploaded to s3', account['account_id'])
 
     logger.debug('SG with unrestriced check finished')
