@@ -18,7 +18,7 @@ def handler(event, context):
     protocol_name = { 22: 'SSH', 53: 'DNS', 21: 'FTP', 23: 'Telnet', 65535: 'All TCP' }
 
     for account in craws.accounts:
-        results = {'Rule Name': 'Security groups with unrestriced access'}
+        results = {'Rule Name': 'Security Groups With Unrestriced Access'}
         results['Area'] = 'EC2'
         results['Description'] = 'Check your EC2 security groups for inbound rules that allow unrestricted access (i.e. 0.0.0.0/0)'  +\
             ' to any TCP and UDP ports and restrict access to only those IP addresses that require it in order to implement' +\

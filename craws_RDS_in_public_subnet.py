@@ -16,7 +16,7 @@ def handler(event, context):
     sts = boto3.client('sts')
     
     for account in craws.accounts:
-        results = {'Rule Name': 'RDS in public subnet'}
+        results = {'Rule Name': 'RDS in Public Subnet'}
         results['Area'] = 'RDS'
         results['Description'] = 'Ensure that no AWS RDS database instances are provisioned inside VPC public subnets in order to protect them from direct exposure to the Internet. Since database instances are not Internet-facing '  +\
             'and their management (running software updates, implementing security patches, etc) is done by Amazon, these instances should run only in private subnets.' 
