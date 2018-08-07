@@ -17,7 +17,7 @@ def handler(event, context):
     
 
     for account in craws.accounts:
-        results = {'Rule Name': 'Unused Security Groups in AWS Account'}
+        results = {'Rule Name': 'Unused Security Groups'}
         results['Area'] = 'EC2'
         results['Description'] = 'This rule checks the unused and dangling security groups in the AWS account.Security groups that'  +\
             ' are not attached to any resource should be deleted to minimize the surface of attack'
