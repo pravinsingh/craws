@@ -39,69 +39,65 @@ def handler(event, context):
             result = []
             response = iam_client.get_account_password_policy()
             if bool(response['PasswordPolicy']) == False:
-                details.append({'Password Policy': "Not Set", 'Reason': "Password policy is not defined", 'Status': craws.status['Red']})
+                details.append({'Policy Detail': "Password policy set for the account", 'Status': craws.status['Red']})
                 red_count += 1
             else:
+                green_count += 1
+                details.append({'Policy Detail': "Password policy set for the account", 'Status': craws.status['Green']})
                 if 'MinimumPasswordLength' in response['PasswordPolicy'].keys():
                     if response['PasswordPolicy']['MinimumPasswordLength'] >=8:
                         green_count += 1
-                        pass
+                        details.append({'Policy Detail': "Minimum password length should be more than 8 characters", 'Status': craws.status['Green']})
                     else:
                         red_count += 1
-                        details.append({'Password Policy': "Weak", 'Reason': "Minimum password length is less than 8 characters", 'Status': craws.status['Red']})
+                        details.append({'Policy Detail': "Minimum password length should be more than 8 characters", 'Status': craws.status['Red']})
                 else:
                     red_count += 1
-                    details.append({'Password Policy': "Weak", 'Reason': "Minimum password length is not set", 'Status': craws.status['Red']})
+                    details.append({'Policy Detail': "Minimum password length should be more than 8 characters", 'Status': craws.status['Red']})
                 if 'MaxPasswordAge' in response['PasswordPolicy'].keys():
                     if response['PasswordPolicy']['MaxPasswordAge'] <= 90:
                         green_count += 1
-                        pass
+                        details.append({'Policy Detail': "Maximum password age should be less than 90 days", 'Status': craws.status['Green']})
                     else:
                         red_count += 1
-                        details.append({'Password Policy': "Weak", 'Reason': "Max password age is less than 90 days", 'Status': craws.status['Red']})
+                        details.append({'Policy Detail': "Maximum password age should be less than 90 days", 'Status': craws.status['Red']})
                 else:
                     red_count += 1
-                    details.append({'Password Policy': "Weak", 'Reason': "Max password age is not set", 'Status': craws.status['Red']})
+                    details.append({'Policy Detail': "Maximum password age should be less than 90 days", 'Status': craws.status['Red']})
                 if 'PasswordReusePrevention' in response['PasswordPolicy'].keys():
-                    if response['PasswordPolicy']['PasswordReusePrevention'] >= 20:
+                    if response['PasswordPolicy']['PasswordReusePrevention'] >= 10:
                         green_count += 1
-                        pass
+                        details.append({'Policy Detail': "Password reuse prevention should be more than 10 times", 'Status': craws.status['Green']})
                     else:
                         red_count += 1
-                        details.append({'Password Policy': "Weak", 'Reason': "Password reuse prevention is less than 20 times", 'Status': craws.status['Red']})
+                        details.append({'Policy Detail': "Password reuse prevention should be more than 10 times", 'Status': craws.status['Red']})
                 else:
                     red_count += 1
-                    details.append({'Password Policy': "Weak", 'Reason': "Password reuse prevention is not set", 'Status': craws.status['Red']})
+                    details.append({'Policy Detail': "Password reuse prevention should be more than 10 times", 'Status': craws.status['Red']})
                 if response['PasswordPolicy']['RequireSymbols'] == True:
                     green_count += 1
-                    pass
+                    details.append({'Policy Detail': "Password should require atleast one special character", 'Status': craws.status['Green']})
                 else:
                     red_count += 1
-                    details.append({'Password Policy': "Weak", 'Reason': "Password does not require symbol", 'Status': craws.status['Red']})
+                    details.append({'Policy Detail': "Password should require atleast one special character", 'Status': craws.status['Red']})
                 if response['PasswordPolicy']['RequireNumbers'] == True:
                     green_count += 1
-                    pass
+                    details.append({'Policy Detail': "Password should require atleast one number", 'Status': craws.status['Green']})
                 else:
                     red_count += 1
-                    details.append({'Password Policy': "Weak", 'Reason': "Password does not require numbers", 'Status': craws.status['Red']})
+                    details.append({'Policy Detail': "Password should require atleast one number", 'Status': craws.status['Red']})
                 if response['PasswordPolicy']['RequireUppercaseCharacters'] == True:
                     green_count += 1
-                    pass
+                    details.append({'Policy Detail': "Password should require atleast one uppercase character", 'Status': craws.status['Green']})
                 else:
                     red_count += 1
-                    details.append({'Password Policy': "Weak", 'Reason': "Password does not require uppercase characters", 'Status': craws.status['Red']})
+                    details.append({'Policy Detail': "Password should require atleast one uppercase character", 'Status': craws.status['Red']})
                 if response['PasswordPolicy']['RequireLowercaseCharacters'] == True:
                     green_count += 1
-                    pass
+                    details.append({'Policy Detail': "Password should require atleast one lowercase character", 'Status': craws.status['Green']})
                 else:
                     red_count += 1
-                    details.append({'Password Policy': "Weak", 'Reason': "Password does not require lowercase characters", 'Status': craws.status['Red']})
-                
-            if len(details) == 0:
-                green_count += 1
-                details.append({'Password Policy': "Strong", 'Reason': "All parameters for strong password are set", 'Status': craws.status['Green']})
-                # All good, mark it as Green
-                #details.append({'Region': region['Id'] + " (" + region['ShortName'] + ")", 'Status': craws.status['Green'], 'Result': result})
+                    details.append({'Policy Detail': "Password should require atleast one lowercase character", 'Status': craws.status['Red']})
 
         
         except Exception as e:
