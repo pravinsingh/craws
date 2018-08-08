@@ -17,27 +17,20 @@ def handler(event, context):
 
     sts = boto3.client('sts')
 
-    for role_arn in craws.role_arns:
+    for account in craws.accounts:
         results = {'Rule Name': 'Access Keys Not Rotated'}
         results['Area'] = 'IAM'
         results['Description'] = 'Auditing all IAM users access/secret keys is a good way in order to secure the AWS account against' +\
-            ' attackers. This rule will keep a check that all users rotate their,' +\
+            ' attackers. This rule will keep a check that all users rotate their ' +\
             'access/secret keys monthly.'
         details = []
         try:
-            response = sts.assume_role(RoleArn=role_arn, RoleSessionName='KeysNotRotated')
+            response = sts.assume_role(RoleArn=account['role_arn'], RoleSessionName='KeysNotRotated')
         except Exception as e:
             logger.error(e)
             continue
         credentials = response['Credentials']
-        # We need to get the sts client again, with the temp tokens. Otherwise any attempt to get the account id 
-        # will return the account id of the original caller and not the account id of the assumed role.
-        sts_client = boto3.client('sts', aws_access_key_id=credentials['AccessKeyId'], 
-                                    aws_secret_access_key=credentials['SecretAccessKey'], 
-                                    aws_session_token=credentials['SessionToken'])
-        account_id = sts_client.get_caller_identity().get('Account')
-        #regions = craws.get_region_descriptions()
-        #total_count = len(regions)
+        regions = craws.get_region_descriptions()
         green_count = red_count = orange_count = yellow_count = grey_count = 0
         
         
@@ -80,18 +73,20 @@ def handler(event, context):
                             
                                 
                     
-                    if count >= 1 and key_present >= 1:
-                        details.append({'User Name': user.name,'ARN': user.arn, 'Status': craws.status['Red']})
+                    #if count >= 1 and key_present >= 1:
+                    if count >= 1:
+                        details.append({'User Name': user.name,'ARN': user.arn,'Status': craws.status['Red']})
                         red_count += 1
                         
                     
-                    elif count == 0 and key_present >= 1 :
-                        details.append({'User Name':user.name,'ARN': user.arn, 'Status': craws.status['Green']})
+                    #elif count == 0 and key_present >= 1 :
+                    else:
+                        details.append({'User Name':user.name,'ARN': user.arn,'Status': craws.status['Green']})
                         green_count += 1
                     
-                    elif count == 0 and key_present == 0 :
-                        details.append({'User Name':user.name,'ARN': user.arn, 'Status': craws.status['Grey']})
-                        grey_count += 1
+                    #elif count == 0 and key_present == 0 :
+                    #    details.append({'User Name':user.name,'ARN': user.arn, 'Status': craws.status['Grey']})
+                    #    grey_count += 1
                         
                                 
                     
@@ -102,7 +97,7 @@ def handler(event, context):
                 except Exception as e:
                     logger.error(e)
                     # Exception occured, mark it as Grey (not checked)
-                    details.append({'User Name': user.name, 'Status': craws.status['Grey']})
+                    details.append({'User Name': user.name,'ARN': user.arn, 'Status': craws.status['Grey']})
                     grey_count += 1
                 
                 
@@ -121,7 +116,7 @@ def handler(event, context):
         results['OrangeCount'] = orange_count
         results['YellowCount'] = yellow_count
         results['GreyCount'] = grey_count
-        craws.upload_result_json(results, 'KeysNotRotated.json', account_id)
-        logger.info('Results for accout %s uploaded to s3', account_id)
+        craws.upload_result_json(results, 'KeysNotRotated.json', account['account_id'])
+        logger.info('Results for accout %s uploaded to s3', account['account_id'])
     
     logger.debug('Keys Not Rotated check finished')
