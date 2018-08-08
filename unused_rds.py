@@ -16,26 +16,19 @@ def handler(event, context):
 
     sts = boto3.client('sts')
     
-    for role_arn in craws.role_arns:
+    for account in craws.accounts:
         results = {'Rule Name': 'Idle RDS instances'}
         results['Area'] = 'RDS'
         results['Description'] = 'Ensure that no AWS RDS database instances is Idle/Unused to help lower '  +\
             'the cost of our monthly AWS bill .' 
         details = []
         try:
-            response = sts.assume_role(RoleArn=role_arn, RoleSessionName='IdleRdsInstance')
+            response = sts.assume_role(RoleArn=account['role_arn'], RoleSessionName='IdleRdsInstance')
         except Exception as e:
             logger.error(e)
             continue
         credentials = response['Credentials']
-        # We need to get the sts client again, with the temp tokens. Otherwise any attempt to get the account id 
-        # will return the account id of the original caller and not the account id of the assumed role.
-        sts_client = boto3.client('sts', aws_access_key_id=credentials['AccessKeyId'], 
-                                    aws_secret_access_key=credentials['SecretAccessKey'], 
-                                    aws_session_token=credentials['SessionToken'])
-        account_id = sts_client.get_caller_identity().get('Account')
         regions = craws.get_region_descriptions()
-        total_count = len(regions)
         green_count = red_count = orange_count = yellow_count = grey_count = 0
 
         for region in regions:
@@ -120,22 +113,21 @@ def handler(event, context):
                                 vpcname = tags["Value"]
                                 
                         if data < 1 and readiops < 20 and writeiops < 20 :
-                            result.append({'Instance ID':db['DBInstanceIdentifier'], 'Name':db['DBName'],
-                            'Master Username':db['MasterUsername'],'DB instance State':db['DBInstanceStatus'],'VPC Name':vpcname,'DB Connection':data,'ReadIOPS':readiops,'WriteIOPS':writeiops})
+                            result.append({'Instance ID':db['DBInstanceIdentifier'],'Master Username':db['MasterUsername'],'VPC Name':vpcname,'DB Connection':data,'ReadIOPS':readiops,'WriteIOPS':writeiops})
                             #details.append({'Region': region['Id'] + " (" + region['ShortName'] + ")", 'Status': craws.status['Red'], 'Result': result})
                             red_count += 1
                             red_bool = True
-                        else:
-                            result.append({'Instance ID':db['DBInstanceIdentifier'],'DB instance State':db['DBInstanceStatus'], 'Name':db['DBName'], 'Master Username':db['MasterUsername']})
+                        #else:
+                        #    result.append({'Instance ID':db['DBInstanceIdentifier'],'DB instance State':db['DBInstanceStatus'], 'Name':db['DBName'], 'Master Username':db['MasterUsername']})
                             #details.append({'Region': region['Id'] + " (" + region['ShortName'] + ")", 'Status': craws.status['Green'], 'Result': result})
+                        #    green_count += 1
+                        #    green_bool = True
+                    
+                        else:
+                        #result.append({'Instance ID':db['DBInstanceIdentifier'],'Master Username':db['MasterUsername'],'DB instance State':db['DBInstanceStatus']})
+                        #details.append({'Region': region['Id'] + " (" + region['ShortName'] + ")", 'Status': craws.status['Grey'], 'Result': result})
                             green_count += 1
                             green_bool = True
-                    
-                    else:
-                        result.append({'Instance ID':db['DBInstanceIdentifier'],'DB instance State':db['DBInstanceStatus'], 'Name':db['DBName'], 'Master Username':db['MasterUsername']})
-                        #details.append({'Region': region['Id'] + " (" + region['ShortName'] + ")", 'Status': craws.status['Grey'], 'Result': result})
-                        grey_count += 1
-                        #grey_bool = True
                         
                         
                 
@@ -151,13 +143,13 @@ def handler(event, context):
                 
 
                 
-            elif green_bool == True:
+            else:
                 
                 details.append({'Region': region['Id'] + " (" + region['ShortName'] + ")", 'Status': craws.status['Green'], 'Result': result})
             
-            else:
+            #else:
                 
-                details.append({'Region': region['Id'] + " (" + region['ShortName'] + ")", 'Status': craws.status['Grey'], 'Result': result})
+            #    details.append({'Region': region['Id'] + " (" + region['ShortName'] + ")", 'Status': craws.status['Grey'], 'Result': result})
                 
                 
                 
@@ -171,7 +163,7 @@ def handler(event, context):
         results['OrangeCount'] = orange_count
         results['YellowCount'] = yellow_count
         results['GreyCount'] = grey_count
-        craws.upload_result_json(results, 'IdleRdsInstances.json', account_id)
-        logger.info('Results for account %s uploaded to s3', account_id)
+        craws.upload_result_json(results, 'IdleRdsInstances.json', account['account_id'])
+        logger.info('Results for account %s uploaded to s3', account['account_id'])
 
     logger.debug('Idle RDS instances check finished')
