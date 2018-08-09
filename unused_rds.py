@@ -1,14 +1,11 @@
 """ This rule checks Idle/Unused RDS instances.
 """
 
-__version__ = '0.1.0'
+__version__ = '0.1.1'
 __author__ = 'Anmol Saini'
 import boto3
 import craws
 import datetime
-
-
-
 
 def handler(event, context):
     logger = craws.get_logger(name='')
@@ -34,7 +31,6 @@ def handler(event, context):
         for region in regions:
             red_bool = green_bool = grey_bool = False
             
-            
             ec2_client = boto3.client('ec2', region_name=region['Id'],
                                         aws_access_key_id=credentials['AccessKeyId'], 
                                         aws_secret_access_key=credentials['SecretAccessKey'], 
@@ -55,9 +51,6 @@ def handler(event, context):
                                         aws_access_key_id=credentials['AccessKeyId'], 
                                         aws_secret_access_key=credentials['SecretAccessKey'], 
                                         aws_session_token=credentials['SessionToken'])
-                                        
-            
-            
             
             try:
                 
@@ -100,37 +93,14 @@ def handler(event, context):
                         )
                         
                         writeiops=response3['Datapoints'][0]['Average']
-                        
-                        
-                        
-                        
-                        vpc_id=(db['DBSubnetGroup']['VpcId'])
-                        
-                        vpc = ec2.Vpc(vpc_id)
-                        
-                        for tags in vpc.tags:
-                            if tags["Key"] == 'Name':
-                                vpcname = tags["Value"]
                                 
                         if data < 1 and readiops < 20 and writeiops < 20 :
-                            result.append({'Instance ID':db['DBInstanceIdentifier'],'Master Username':db['MasterUsername'],'VPC Name':vpcname,'DB Connection':data,'ReadIOPS':readiops,'WriteIOPS':writeiops})
-                            #details.append({'Region': region['Id'] + " (" + region['ShortName'] + ")", 'Status': craws.status['Red'], 'Result': result})
+                            result.append({'Instance ID':db['DBInstanceIdentifier'],'Master Username':db['MasterUsername'],'DB Connection':data,'ReadIOPS':readiops,'WriteIOPS':writeiops})
                             red_count += 1
                             red_bool = True
-                        #else:
-                        #    result.append({'Instance ID':db['DBInstanceIdentifier'],'DB instance State':db['DBInstanceStatus'], 'Name':db['DBName'], 'Master Username':db['MasterUsername']})
-                            #details.append({'Region': region['Id'] + " (" + region['ShortName'] + ")", 'Status': craws.status['Green'], 'Result': result})
-                        #    green_count += 1
-                        #    green_bool = True
-                    
                         else:
-                        #result.append({'Instance ID':db['DBInstanceIdentifier'],'Master Username':db['MasterUsername'],'DB instance State':db['DBInstanceStatus']})
-                        #details.append({'Region': region['Id'] + " (" + region['ShortName'] + ")", 'Status': craws.status['Grey'], 'Result': result})
                             green_count += 1
                             green_bool = True
-                        
-                        
-                
                 
             except Exception as e:
                 logger.error(e)
@@ -140,22 +110,8 @@ def handler(event, context):
             
             if red_bool == True:
                 details.append({'Region': region['Id'] + " (" + region['ShortName'] + ")", 'Status': craws.status['Red'], 'Result': result})
-                
-
-                
             else:
-                
                 details.append({'Region': region['Id'] + " (" + region['ShortName'] + ")", 'Status': craws.status['Green'], 'Result': result})
-            
-            #else:
-                
-            #    details.append({'Region': region['Id'] + " (" + region['ShortName'] + ")", 'Status': craws.status['Grey'], 'Result': result})
-                
-                
-                
-            
-                
-
 
         results['Details'] = details
         results['GreenCount'] = green_count
@@ -167,3 +123,4 @@ def handler(event, context):
         logger.info('Results for account %s uploaded to s3', account['account_id'])
 
     logger.debug('Idle RDS instances check finished')
+
