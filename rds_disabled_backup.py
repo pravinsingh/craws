@@ -1,12 +1,11 @@
 """ This rule checks for any RDS Instances with Disabled Automated Backup.
 """
 
-__version__ = '0.1.0'
+__version__ = '0.1.1'
 __author__ = 'Anmol Saini'
 
 import boto3
 import craws
-
 
 def handler(event, context):
     logger = craws.get_logger(name='RdsWithDisabledBackup')
@@ -15,7 +14,7 @@ def handler(event, context):
     sts = boto3.client('sts')
 
     for account in craws.accounts:
-        results = {'Rule Name': 'RDS Instances with Disabled Automated Backup'}
+        results = {'Rule Name': 'RDS Instances With Disabled Automated Backup'}
         results['Area'] = 'RDS'
         results['Description'] = 'Ensure that no AWS RDS database instances has automated backup '  +\
             'disabled .'
