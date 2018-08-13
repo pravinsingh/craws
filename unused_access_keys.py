@@ -1,7 +1,7 @@
 """ This rule checks whether users having Unused access/secret keys.
 """
 
-__version__ = '0.1.1'
+__version__ = '0.1.2'
 __author__ = 'Anmol Saini'
 
 import boto3
@@ -20,7 +20,7 @@ def handler(event, context):
         results['Area'] = 'IAM'
         results[
             'Description'] = 'Auditing all IAM users access/secret keys is a good way to secure the AWS account against' + \
-                             ' attackers. This rule will keep a check on all users unused ' + \
+                             ' attackers. This rule will keep a check on all users\' unused ' + \
                              'access/secret keys .'
         details = []
         try:
@@ -31,7 +31,7 @@ def handler(event, context):
         credentials = response['Credentials']
         regions = craws.get_region_descriptions()
         green_count = red_count = orange_count = yellow_count = grey_count = 0
-        KEY = 'LastUsedDate'
+        key = 'LastUsedDate'
         iam_client = boto3.client('iam',
                                   aws_access_key_id=credentials['AccessKeyId'],
                                   aws_secret_access_key=credentials['SecretAccessKey'],
@@ -51,7 +51,7 @@ def handler(event, context):
                             
                         AccessId = access_key.access_key_id
                         LastUsed = iam_client.get_access_key_last_used(AccessKeyId=AccessId)
-                        if KEY in LastUsed['AccessKeyLastUsed']:
+                        if key in LastUsed['AccessKeyLastUsed']:
                             last_used = LastUsed['AccessKeyLastUsed']['LastUsedDate']
                             last_used_date = last_used.date()
                             timeLimit1 = datetime.datetime.now() - datetime.timedelta(days=90)
