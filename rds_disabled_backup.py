@@ -1,4 +1,4 @@
-""" This rule checks for any RDS Instances with Disabled Automated Backup.
+""" This rule checks whether RDS instances have disabled automated backup.
 """
 
 __version__ = '0.1.1'
