@@ -94,3 +94,4 @@ def handler(event, context):
 
     logger.debug('Ec2 Instances Distribution check finished')
 
+handler(None,None)
