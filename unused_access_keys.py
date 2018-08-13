@@ -1,4 +1,4 @@
-""" This rule checks whether user having Unused access/secret keys.
+""" This rule checks whether users having Unused access/secret keys.
 """
 
 __version__ = '0.1.1'
