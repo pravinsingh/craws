@@ -1,4 +1,4 @@
-""" This rule checks users not rotated their access/secret keys.
+""" This rule checks whether users did not rotate their access/secret keys.
 """
 
 __version__ = '0.1.2'

@@ -1,7 +1,7 @@
-""" This rule checks whetther CloudTrail is enabled for all regions.
+""" This rule checks whether CloudTrail is enabled for all regions.
 """
 
-__version__ = '0.1.0'
+__version__ = '0.1.1'
 __author__ = 'Biswa Singh'
 
 import boto3
