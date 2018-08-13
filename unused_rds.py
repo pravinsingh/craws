@@ -1,7 +1,7 @@
 """ This rule checks Idle/Unused RDS instances.
 """
 
-__version__ = '0.1.1'
+__version__ = '0.1.2'
 __author__ = 'Anmol Saini'
 import boto3
 import craws
@@ -16,8 +16,7 @@ def handler(event, context):
     for account in craws.accounts:
         results = {'Rule Name': 'Idle RDS instances'}
         results['Area'] = 'RDS'
-        results['Description'] = 'Ensure that no AWS RDS database instances is Idle/Unused to help lower '  +\
-            'the cost of our monthly AWS bill .' 
+        results['Description'] = 'Ensure that no AWS RDS database instances is Idle/Unused to help lower the cost of our monthly AWS bill . '
         details = []
         try:
             response = sts.assume_role(RoleArn=account['role_arn'], RoleSessionName='IdleRdsInstance')
