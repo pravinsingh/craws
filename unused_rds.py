@@ -16,7 +16,10 @@ def handler(event, context):
     for account in craws.accounts:
         results = {'Rule Name': 'Idle RDS instances'}
         results['Area'] = 'RDS'
-        results['Description'] = 'Ensure that no AWS RDS database instances is Idle/Unused to help lower the cost of our monthly AWS bill . '
+        results['Description'] = 'Ensure that no AWS RDS database instances is Idle/Unused to help lower the cost of our monthly AWS bill . ' + \
+                                 'An RDS instance is considered ‘idle’ when it meets the following criteria (to declare the instance ‘idle’ both conditions must be true) : ' + \
+				 '- The average number of database connections has been less than 1 for the last 7 days . ' + \
+				 '- The total number of database ReadIOPS and WriteIOPS recorded per day for the last 7 days has been less than 20 on average . '
         details = []
         try:
             response = sts.assume_role(RoleArn=account['role_arn'], RoleSessionName='IdleRdsInstance')
