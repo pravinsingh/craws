@@ -18,8 +18,8 @@ def handler(event, context):
     for account in craws.accounts:
         results = {'Rule Name': 'Unused Access Keys'}
         results['Area'] = 'IAM'
-        results['Description'] = 'Auditing all IAM users access/secret keys is a good way to secure the AWS account against attackers. This rule will keep a check on all users\' unused ' + \
-                                 'access/secret keys .'
+        results['Description'] = 'Auditing all IAM users access/secret keys is a good way to secure the AWS account against attackers. ' + \
+                                 'This rule will keep a check on all users\' unused access/secret keys .'
         details = []
         try:
             response = sts.assume_role(RoleArn=account['role_arn'], RoleSessionName='UnusedKeys')
