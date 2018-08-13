@@ -1,4 +1,4 @@
-""" This rule checks users having multiple access/secret keys.
+""" This rule checks whether user having multiple access/secret keys.
 """
 
 __version__ = '0.1.1'
