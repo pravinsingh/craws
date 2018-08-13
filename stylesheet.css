@@ -109,7 +109,7 @@ tr:hover { background-color:peachpuff; }
     background-color: #ffffff;
     margin-bottom: 5px; 
 }
-.description{ padding: 10px;font-style: italic; }
+.description{ padding: 10px; font-size: smaller; }
 .area { 
     font-size: larger; 
     font-weight: bold; 
