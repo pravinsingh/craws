@@ -1,7 +1,7 @@
 """ This rule checks Idle/Unused RDS instances.
 """
 
-__version__ = '0.1.2'
+__version__ = '0.1.3'
 __author__ = 'Anmol Saini'
 import boto3
 import craws
@@ -31,7 +31,7 @@ def handler(event, context):
         green_count = red_count = orange_count = yellow_count = grey_count = 0
 
         for region in regions:
-            red_bool = green_bool = grey_bool = False
+            yellow_bool = green_bool = grey_bool = False
             
             ec2_client = boto3.client('ec2', region_name=region['Id'],
                                         aws_access_key_id=credentials['AccessKeyId'], 
@@ -97,9 +97,9 @@ def handler(event, context):
                         writeiops=response3['Datapoints'][0]['Average']
                                 
                         if data < 1 and readiops < 20 and writeiops < 20 :
-                            result.append({'Instance ID':db['DBInstanceIdentifier'],'Master Username':db['MasterUsername'],'DB Connection':data,'ReadIOPS':readiops,'WriteIOPS':writeiops})
-                            red_count += 1
-                            red_bool = True
+                            result.append({'Instance ID':db['DBInstanceIdentifier'],'Master Username':db['MasterUsername'],'Average DB Connections':data,'Average ReadIOPS':readiops,'Average WriteIOPS':writeiops})
+                            yellow_count += 1
+                            yellow_bool = True
                         else:
                             green_count += 1
                             green_bool = True
@@ -110,8 +110,8 @@ def handler(event, context):
                 details.append({'Region': region['Id'] + " (" + region['ShortName'] + ")", 'Status': craws.status['Grey'], 'Result': result})
                 grey_count += 1
             
-            if red_bool == True:
-                details.append({'Region': region['Id'] + " (" + region['ShortName'] + ")", 'Status': craws.status['Red'], 'Result': result})
+            if yellow_bool == True:
+                details.append({'Region': region['Id'] + " (" + region['ShortName'] + ")", 'Status': craws.status['Yellow'], 'Result': result})
             else:
                 details.append({'Region': region['Id'] + " (" + region['ShortName'] + ")", 'Status': craws.status['Green'], 'Result': result})
 
