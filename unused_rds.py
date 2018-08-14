@@ -17,7 +17,7 @@ def handler(event, context):
         results = {'Rule Name': 'Idle RDS Instances'}
         results['Area'] = 'RDS'
         results['Description'] = 'Ensure that no AWS RDS database instances is Idle/Unused to help lower the cost of our monthly AWS bill. ' + \
-                                 'An RDS instance is considered &#39;idle&#39; when it meets the following criteria (to declare the instance &#39;idle&#39; both conditions must be true) : ' + \
+                                 'An RDS instance is considered &#39;idle&#39; when it meets the following criteria (to declare the instance &#39;idle&#39; both conditions must be true): ' + \
 				 '<br>- The average number of database connections has been less than 1 for the last 7 days. ' + \
 				 '<br>- The total number of database ReadIOPS and WriteIOPS recorded per day for the last 7 days has been less than 20 on average. '
         details = []
