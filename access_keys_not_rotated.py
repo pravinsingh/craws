@@ -20,7 +20,7 @@ def handler(event, context):
         results['Area'] = 'IAM'
         results[
             'Description'] = 'Auditing all IAM users access/secret keys is a good way to secure the AWS account against' + \
-                             ' attackers. This rule will keep a check whether all users rotate their ' + \
+                             ' attackers. This rule will keep a check whether all user&#39; rotate their ' + \
                              'access/secret keys monthly.'
         details = []
         try:
