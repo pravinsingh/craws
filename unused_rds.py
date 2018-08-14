@@ -14,7 +14,7 @@ def handler(event, context):
     sts = boto3.client('sts')
     
     for account in craws.accounts:
-        results = {'Rule Name': 'Idle RDS instances'}
+        results = {'Rule Name': 'Idle RDS Instances'}
         results['Area'] = 'RDS'
         results['Description'] = 'Ensure that no AWS RDS database instances is Idle/Unused to help lower the cost of our monthly AWS bill . ' + \
                                  'An RDS instance is considered \‘idle\’ when it meets the following criteria (to declare the instance \‘idle\’ both conditions must be true) : ' + \
