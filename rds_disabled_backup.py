@@ -1,7 +1,7 @@
 """ This rule checks whether RDS instances have disabled automated backup.
 """
 
-__version__ = '0.1.1'
+__version__ = '0.1.2'
 __author__ = 'Anmol Saini'
 
 import boto3
@@ -16,8 +16,7 @@ def handler(event, context):
     for account in craws.accounts:
         results = {'Rule Name': 'RDS Instances With Disabled Automated Backup'}
         results['Area'] = 'RDS'
-        results['Description'] = 'Ensure that no AWS RDS database instances has automated backup '  +\
-            'disabled .'
+        results['Description'] = 'Ensure that no AWS RDS database instances has automated backup disabled. '
         details = []
         try:
             response = sts.assume_role(RoleArn=account['role_arn'], RoleSessionName='RdsWithNoBackup')
