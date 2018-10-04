@@ -1,7 +1,7 @@
 """ This rule checks for any unused security groups in AWS account.
 """
 
-__version__ = '0.6.0'
+__version__ = '0.6.1'
 __author__ = 'Bhupender Kumar'
 import boto3
 import craws
@@ -44,6 +44,10 @@ def handler(event, context):
                                             aws_access_key_id=credentials['AccessKeyId'], 
                                             aws_secret_access_key=credentials['SecretAccessKey'], 
                                             aws_session_token=credentials['SessionToken'])
+                cloudtrail_client = boto3.client('cloudtrail', region_name=region['Id'],
+                                            aws_access_key_id=credentials['AccessKeyId'], 
+                                            aws_secret_access_key=credentials['SecretAccessKey'], 
+                                            aws_session_token=credentials['SessionToken'])
                 try:
                     result = []
                     sgrps = ec2_client.describe_security_groups()
@@ -63,6 +67,7 @@ def handler(event, context):
                         # Some issues found, mark it as Red/Orange/Yellow depending on this check's risk level
                         #details.append({'Status': craws.status['Red'], 'Region': region['Id'] + " (" + region['ShortName'] + ")", 'Result': result})
                         orange_count += 1
+                        unused_sec_grp = craws.get_cloudtrail_data(unused_sec_grp, region['Id'], cloudtrail_client)
                         result.append({'Security Group Id': unused_sec_grp})
                     
                 except Exception as e:
@@ -89,5 +94,4 @@ def handler(event, context):
             logger.info('Results for account %s uploaded to s3', account['account_id'])
 
     logger.debug('Unused security groups check finished')
-
 

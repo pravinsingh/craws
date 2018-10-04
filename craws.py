@@ -1,7 +1,7 @@
 """ Base module for project Craws that is used in all compliance-rule implementations.
 """
 
-__version__ = '0.3.0'
+__version__ = '0.4.0'
 __author__ = 'Pravin Singh'
 
 import boto3
@@ -150,6 +150,31 @@ def get_region_descriptions():
         return regions
     except Exception as e:
         _logger.error(e)
+
+def get_cloudtrail_data(lookup_value, region_id, cloudtrail_client):
+    """ Get CloudTrail data for the item. Creates a summary to be shown in tooltip and a link to the CloudTrail event log. \
+    The returned value should replace the lookup value in the calling function (since it anyways returns the oroginal lookup \
+    value in case there are no CloudTrail logs).\n
+        ``lookup_value``: The Id/name of the resource to be looked up\n
+        ``region_id``: Region Id of the resource\n
+        ``cloudtrail_client``: CloudTrail client for the account containing the resource
+    """
+    try:
+        cloudtrail_link = ('https://' + region_id + '.console.aws.amazon.com/cloudtrail/home?region=' + region_id 
+                            + '#/events?ResourceName=' + lookup_value)
+        cloudtrail_data = ('<a href="' + cloudtrail_link + '" target="_blank" class="hover" title="">' + lookup_value 
+                            + '</a><table style="display:none"><tr><th>Date</th><th>User</th><th>Action</th></tr>')
+        response = cloudtrail_client.lookup_events(LookupAttributes=[{'AttributeKey': 'ResourceName', 'AttributeValue': lookup_value}])
+        if not response['Events']:
+            return lookup_value
+        for event in response['Events']:
+            cloudtrail_data += ('<tr><td>' + event['EventTime'].strftime("%Y-%m-%d %I:%M:%S %p") + '</td><td>' + event['Username'] 
+                                + '</td><td>' + event['EventName'] + '</td></tr>')
+        cloudtrail_data += '</table>'
+        return cloudtrail_data
+    except Exception as e:
+        _logger.error(e)
+        return lookup_value
 
 def get_logger(name='', level='WARNING'):
     """ Get the Python logger. By default, the level is set to WARNING but can be changed as needed.\n

@@ -1,7 +1,7 @@
 """ This rule checks for any unattached Elastic IPs currently available.
 """
 
-__version__ = '0.5.1'
+__version__ = '0.6.0'
 __author__ = 'Pravin Singh'
 
 import boto3
@@ -45,6 +45,10 @@ def handler(event, context):
                                             aws_access_key_id=credentials['AccessKeyId'], 
                                             aws_secret_access_key=credentials['SecretAccessKey'], 
                                             aws_session_token=credentials['SessionToken'])
+                cloudtrail_client = boto3.client('cloudtrail', region_name=region['Id'],
+                                            aws_access_key_id=credentials['AccessKeyId'], 
+                                            aws_secret_access_key=credentials['SecretAccessKey'], 
+                                            aws_session_token=credentials['SessionToken'])
                 try:
                     result = []
                     response = ec2_client.describe_addresses()
@@ -59,6 +63,7 @@ def handler(event, context):
                                         name = tag['Value']
                                         break
 
+                            address['PublicIp'] = craws.get_cloudtrail_data(address['PublicIp'], region['Id'], cloudtrail_client)
                             result.append({'Elastic IP':address['PublicIp'], 'Name':name})
                             yellow_count += 1
                 except Exception as e:
@@ -84,7 +89,4 @@ def handler(event, context):
             logger.info('Results for accout %s uploaded to s3', account['account_id'])
 
     logger.debug('Unused Elastic Ips check finished')
-
-
-
 
