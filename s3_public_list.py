@@ -1,7 +1,7 @@
 """ This rule checks for s3 buckets with 'LIST' access open to everyone.
 """
 
-__version__ = '0.2.0'
+__version__ = '0.2.1'
 __author__ = 'Pravin Singh'
 
 import boto3
@@ -23,6 +23,7 @@ def handler(event, context):
                                     aws_session_token=response['Credentials']['SessionToken'])
             today = str(datetime.datetime.now().date())
             response = s3_client.head_object(Bucket = craws.bucket, Key = today+'/'+account['account_id']+'/S3PublicList.json')
+            logger.info('Account ' + account['account_id'] + ' already checked. Skipping.')
         except Exception:
             # This rule has not been executed today for this account, go ahead and execute
             results = {'Rule Name': 'S3 Bucket Public LIST Access'}

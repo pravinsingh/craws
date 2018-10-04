@@ -1,7 +1,7 @@
 """ This rule checks whether MFA (Multi Factor Authentication) is enabled for all IAM users as well as the root account.
 """
 
-__version__ = '0.5.0'
+__version__ = '0.5.1'
 __author__ = 'Pravin Singh'
 
 import boto3
@@ -26,6 +26,7 @@ def handler(event, context):
                                     aws_session_token=response['Credentials']['SessionToken'])
             today = str(datetime.datetime.now().date())
             response = s3_client.head_object(Bucket = craws.bucket, Key = today+'/'+account['account_id']+'/MfaNotEnabled.json')
+            logger.info('Account ' + account['account_id'] + ' already checked. Skipping.')
         except Exception:
             # This rule has not been executed today for this account, go ahead and execute
             results = {'Rule Name': 'MFA Not Enabled'}

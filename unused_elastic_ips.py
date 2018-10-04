@@ -1,7 +1,7 @@
 """ This rule checks for any unattached Elastic IPs currently available.
 """
 
-__version__ = '0.5.0'
+__version__ = '0.5.1'
 __author__ = 'Pravin Singh'
 
 import boto3
@@ -22,6 +22,7 @@ def handler(event, context):
                                     aws_session_token=response['Credentials']['SessionToken'])
             today = str(datetime.datetime.now().date())
             response = s3_client.head_object(Bucket = craws.bucket, Key = today+'/'+account['account_id']+'/UnusedElasticIps.json')
+            logger.info('Account ' + account['account_id'] + ' already checked. Skipping.')
         except Exception:
             # This rule has not been executed today for this account, go ahead and execute
             results = {'Rule Name': 'Unused Elastic IPs'}
@@ -85,5 +86,5 @@ def handler(event, context):
     logger.debug('Unused Elastic Ips check finished')
 
 
-        
+
 

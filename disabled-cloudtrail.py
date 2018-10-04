@@ -1,7 +1,7 @@
 """ This rule checks whether CloudTrail is enabled for all regions.
 """
 
-__version__ = '0.2.0'
+__version__ = '0.3.0'
 __author__ = 'Biswa Singh'
 
 import boto3
@@ -23,6 +23,7 @@ def handler(event, context):
                                     aws_session_token=response['Credentials']['SessionToken'])
             today = str(datetime.datetime.now().date())
             response = s3_client.head_object(Bucket = craws.bucket, Key = today+'/'+account['account_id']+'/DisabledCloudTrail.json')
+            logger.info('Account ' + account['account_id'] + ' already checked. Skipping.')
         except Exception:
             # This rule has not been executed today for this account, go ahead and execute
             results = {'Rule Name': 'Disabled CloudTrail'}
@@ -46,26 +47,26 @@ def handler(event, context):
                                                     aws_session_token=credentials['SessionToken'])
                 try:
                     trails = clooudtrail_client.describe_trails()
-
+                    
                     found = False
-
+                    
                     for trail in trails['trailList']:
                         if trail['IsMultiRegionTrail'] == True or region['Id'] == trail['HomeRegion']:
                             found = True
                             break
-
-                    if found == True:
+                        
+                    if found == True:    
                         green_count += 1
-                        details.append({'Region': region['Id'] + " (" + region['ShortName'] + ")", 'Status': craws.status['Green']})
+                        details.append({'Status': craws.status['Green'], 'Region': region['Id'] + " (" + region['ShortName'] + ")"})
                     else:
                         red_count += 1
-                        details.append({'Region': region['Id'] + " (" + region['ShortName'] + ")", 'Status': craws.status['Red']})
-
+                        details.append({'Status': craws.status['Red'], 'Region': region['Id'] + " (" + region['ShortName'] + ")"})
+                    
                 except Exception as e:
                     logger.error(e)
                     grey_count += 1
-                    details.append({'Region': region['Id'] + " (" + region['ShortName'] + ")", 'Status': craws.status['Grey']})
-
+                    details.append({'Status': craws.status['Grey'], 'Region': region['Id'] + " (" + region['ShortName'] + ")"})
+                
             results['Details'] = details
             results['GreenCount'] = green_count
             results['RedCount'] = red_count

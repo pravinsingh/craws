@@ -1,22 +1,18 @@
 """ This rule checks for any unused security groups in AWS account.
 """
 
-__version__ = '0.5.0'
+__version__ = '0.6.0'
 __author__ = 'Bhupender Kumar'
 import boto3
 import craws
 import datetime
 
-
-
-
 def handler(event, context):
-    logger = craws.get_logger(name='UnusedSecurityGroups')
+    logger = craws.get_logger(name='UnusedSecurityGroups', level='DEBUG')
     logger.debug('Unused security groups check started')
 
     sts = boto3.client('sts')
     
-
     for account in craws.accounts:
         try:
             # Check if this rule has already been executed today for this account
@@ -32,7 +28,7 @@ def handler(event, context):
             results = {'Rule Name': 'Unused Custom Security Groups'}
             results['Area'] = 'EC2'
             results['Description'] = 'This rule checks the unused and dangling custom security groups in the AWS account. Security groups that'  +\
-                ' are not attached to any resource should be deleted to minimize the surface of attack'
+                ' are not attached to any resource should be deleted to minimize the surface of attack.'
             details = []
             try:
                 response = sts.assume_role(RoleArn=account['role_arn'], RoleSessionName='unused_SG')
@@ -55,7 +51,6 @@ def handler(event, context):
                     all_sgrps = set([sg['GroupId'] for sg in sgrps['SecurityGroups']])
                     cstm_sgrps = set()
                     cstm_sgrps = all_sgrps - default_sgrps
-                    # print(all_sgs)
                     used_sgrps = set()
                     net_interface = ec2_client.describe_network_interfaces()
                     for interface in net_interface['NetworkInterfaces']:
@@ -64,7 +59,6 @@ def handler(event, context):
                     green_count += len(list(used_sgrps))
                             
                     unused_sgs = cstm_sgrps - used_sgrps
-                    #print(list(unused_sgs))
                     for unused_sec_grp in list(unused_sgs):
                         # Some issues found, mark it as Red/Orange/Yellow depending on this check's risk level
                         #details.append({'Status': craws.status['Red'], 'Region': region['Id'] + " (" + region['ShortName'] + ")", 'Result': result})
@@ -94,4 +88,6 @@ def handler(event, context):
             craws.upload_result_json(results, 'UnusedSecurityGroups.json', account['account_id'])
             logger.info('Results for account %s uploaded to s3', account['account_id'])
 
-        logger.debug('Unused security groups check finished')
+    logger.debug('Unused security groups check finished')
+
+

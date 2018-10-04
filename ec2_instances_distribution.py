@@ -1,7 +1,7 @@
 """ This rule ensures that the EC2 instances are evenly spread across all Availability Zones (AZs) within an AWS region.
 """
 
-__version__ = '0.4.0'
+__version__ = '0.4.1'
 __author__ = 'Pravin Singh'
 
 import boto3
@@ -32,6 +32,7 @@ def handler(event, context):
                                     aws_session_token=response['Credentials']['SessionToken'])
             today = str(datetime.datetime.now().date())
             response = s3_client.head_object(Bucket = craws.bucket, Key = today+'/'+account['account_id']+'/Ec2InstancesDistribution.json')
+            logger.info('Account ' + account['account_id'] + ' already checked. Skipping.')
         except Exception:
             # This rule has not been executed today for this account, go ahead and execute
             results = {'Rule Name': 'EC2 Instances not distributed evenly across availability zones'}
