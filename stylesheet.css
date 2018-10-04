@@ -1,68 +1,69 @@
-body {
-    font-family: Georgia, serif; 
-    color: indigo
+body, .date {
+    font-family:'Arial Unicode MS','Trebuchet MS', 'Lucida Sans Unicode', 'Lucida Grande', 'Lucida Sans', Arial, sans-serif; 
+    color: indigo;
+    margin-left: 5%;
+    margin-right: 5%;
 }
 img {
-    width: 25px; 
-    height: 25px;
-    float: left;
-    margin: 10px;
+    margin: 0px;
 }
 .logo {
-    width: 124px; 
-    height: 44px;
+    width: 175px; 
+    height: 50px;
     float: right; 
     margin: 5px;
 }
-.red-dot { 
-    height: 15px; width: 15px; 
-    background-color: #d00; 
-    border-radius: 40%; 
-    display: inline-block; 
-    vertical-align: middle
+.sort {
+    width: 15px;
+    height: 15px;
+    float: right;
+    margin: 0px;
 }
-.orange-dot { 
-    height: 15px; 
-    width: 15px; 
-    background-color: #f80; 
-    border-radius: 40%; 
-    display: inline-block; 
-    vertical-align: middle
+.area-icon {
+    width: 25px; 
+    height: 25px;
+    float: left; 
+    margin: 10px;
 }
-.yellow-dot { 
-    height: 15px; 
-    width: 15px; 
-    background-color: #fd0; 
-    border-radius: 40%; 
-    display: inline-block; 
-    vertical-align: middle
+h1, h4, h5, h6 {
+    text-align: center; 
+    margin: 2px;
 }
-.green-dot { 
-    height: 15px; 
-    width: 15px; 
-    background-color: #0e0;
-    border-radius: 40%; 
-    display: inline-block; 
-    vertical-align: middle
+table { 
+    font-size: small; 
+    border: 1px solid lightgrey; 
+    width: 100%; 
+    border-collapse: collapse; 
 }
-.grey-dot { 
-    height: 15px; 
-    width: 15px; 
-    background-color: #ccc; 
-    border-radius: 40%; 
-    display: inline-block; 
+.summary-table {
+    border: 0px; 
+    border-bottom-left-radius: 8px; 
+    border-bottom-right-radius: 8px; 
+    border-collapse: collapse; 
+    background: aliceblue; 
+    float: right; width: 25%; 
+    max-width: 205px; 
+    position: static; 
+    padding: 2px; 
+    margin-bottom: 5px;
 }
-.red-bar { background-color: #d00; height: 5px; padding: 0px }
-.orange-bar { background-color: #f80; height: 5px; padding: 0px }
-.yellow-bar { background-color: #fd0; height: 5px; padding: 0px }
-.green-bar { background-color: #0c0; height: 5px; padding: 0px }
-.grey-bar { background-color: #ccc; height: 5px; padding: 0px }
-h1, h4 {text-align: center; margin: 2px;}
-table { font-size: small; border: 1px solid lightgrey; width: 100%; border-collapse: collapse; }
-th { border: 1px solid lightgrey; background-color: peachpuff; text-align: left; }
-td { border-top: 1px solid lightgrey; border-bottom: 1px solid lightgrey; }
-tr:nth-child(even) { background-color:papayawhip }    
-tr:hover { background-color:peachpuff; }
+.summary-table th { 
+    font-weight: bold;
+}
+.results-table th { 
+    cursor: pointer;
+    border: 1px solid lightgrey; 
+    color: white;
+    background-color: sandybrown; 
+    text-align: left; 
+}
+.results-table td { 
+    border-top: 1px solid lightgrey; 
+    border-bottom: 1px solid lightgrey; 
+    padding-right: 5px;
+}
+.results-table tr:nth-child(even) { background-color:papayawhip }    
+.results-table tr:hover { background-color:peachpuff; }
 .header { 
     font-size: medium; 
     border: none; 
@@ -72,35 +73,47 @@ tr:hover { background-color:peachpuff; }
     margin-bottom: 5px; 
 }
 .header:hover { background-color: #ffffff; }
+.red-dot { height: 15px; width: 15px; background-color: #d00; border: 1px solid white; border-radius: 40%; display: inline-block; vertical-align: middle}
+.orange-dot { height: 15px; width: 15px; background-color: #f80; border: 1px solid white; border-radius: 40%; display: inline-block; vertical-align: middle}
+.yellow-dot { height: 15px; width: 15px; background-color: #fd0; border: 1px solid white; border-radius: 40%; display: inline-block; vertical-align: middle}
+.green-dot { height: 15px; width: 15px; background-color: #0e0; border: 1px solid white; border-radius: 40%; display: inline-block; vertical-align: middle}
+.grey-dot { height: 15px; width: 15px; background-color: #ccc; border: 1px solid white; border-radius: 40%; display: inline-block; vertical-align: middle}
+.bar { float:right; width: 200px; margin: 6px; border: 1px solid white; border-radius: 6px; border-collapse: separate;}
+.red-bar { background-color: #d00; text-align: center; color: white; height: 6px; margin-top: 6px; border: 1px solid white; border-radius: 4px; }
+.orange-bar { background-color: #f80; text-align: center; color: white; height: 6px; margin-top: 6px; border: 1px solid white; border-radius: 4px; }
+.yellow-bar { background-color: #fd0;  text-align: center; color: white; height: 6px; margin-top: 6px; border: 1px solid white; border-radius: 4px; }
+.green-bar { background-color: #0c0;  text-align: center; color: white; height: 6px; margin-top: 6px; border: 1px solid white; border-radius: 4px; }
+.grey-bar { background-color: #ccc; text-align: center; color: white; height: 6px; margin-top: 6px; border: 1px solid white; border-radius: 4px; }
+button, #account {
+    color: #1c94c4;
+    vertical-align: bottom;
+    border-radius: 4px;
+}
 #toggleBtn { 
-    background-color: #777;
-    border: none;
-    color: white;
-    width: 250px;
-    padding: 5px;
-    text-align: center;
-    display: inline-block;
-    font-family: Georgia, serif;
+    width: 258px;
+}
+.date {
+    height: 29px;
     font-size: medium;
-    margin: 4px 2px;
-    cursor: pointer;
-    border-radius: 4px; 
+    border: 1px solid #cccccc;
+    border-radius: 4px;
 }
 .collapsible { 
     background-color: #777;
     color: white;
     cursor: pointer;
-    padding: 5px;
-    width: 99%;
+    padding: 2px 2px 2px 10px;
     border: none;
     text-align: left;
     outline: none;
     font-size: medium;
-    border-radius: 4px; 
+    border-radius: 10px; 
+    overflow: auto; 
+    background: linear-gradient(to left, aliceblue, transparent 400px), linear-gradient(aliceblue, dodgerblue, dodgerblue);
 }
 .active, .collapsible:hover { background-color: #555; }
-.collapsible:after { content: "\002B";color: white;float: left;margin-right: 10px; }
-.active:after { content: "\2212"; }
+.collapsible:before { content: "\002B";color: white;float: left;margin-right: 10px; }
+.active:before { content: "\2212"; }
 .content { 
     padding: 0 12px;
     max-height: 0;
@@ -109,11 +122,23 @@ tr:hover { background-color:peachpuff; }
     background-color: #ffffff;
     margin-bottom: 5px; 
 }
-.description{ padding: 10px; font-size: smaller; }
+.description{ 
+    padding-top: 10px; 
+    padding-bottom: 10px; 
+    font-size: smaller; 
+    float: left; 
+    width: 70%; 
+    position: static;
+}
 .area { 
     font-size: larger; 
     font-weight: bold; 
     margin-left: 40px;
     margin-bottom: 15px; 
     margin-top: 15px;
+}
+.tooltip {
+    font-family:'Arial Unicode MS','Trebuchet MS', 'Lucida Sans Unicode', 'Lucida Grande', 'Lucida Sans', Arial, sans-serif; 
+    font-size: small;
+    color: indigo;
 }
