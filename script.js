@@ -115,6 +115,7 @@ function fetchReport() {
             if (request.readyState === 4){
                 if (request.status === 404 || request.status === 403) {  
                     alert("Report for this date does not exist.");
+                    document.getElementById("datepicker").value = document.getElementById("datepicker").oldValue;
                 }
                 else
                 window.location.assign(newUrl);
