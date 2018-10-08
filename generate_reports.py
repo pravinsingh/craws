@@ -94,7 +94,7 @@ def generate_report(key, s3_client, logger):
         + '<h5>Compliance Reporting for AWS</h5>\n<table class="header"><tr class="header">'
         + '\n\t<td class="header">Account: <b id="account">' + display_name + ' (' + account_id + ')' + '</b></td>'
         + '\n\t<td class="header" style="text-align: right"><button id="toggleBtn" onclick="toggleAll()">Expand All</button></td></tr><tr>'
-        + '\n\t<td class="header">Date: <input class="date ui-button" id="datepicker" onchange="fetchReport()"></td>'
+        + '\n\t<td class="header">Date: <input class="date ui-button" id="datepicker" onfocus="this.oldValue = this.value;" onchange="fetchReport()"></td>'
         + '\n\t<td class="header" style="text-align: right"><select id="theme"><option disabled selected>Change Theme</option>'
         + '<option>Dodger Blue</option><option>Sandy Brown</option><option>Dim Grey</option></select></td>\n</tr></table>\n')
     try:
