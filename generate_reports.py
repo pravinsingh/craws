@@ -163,4 +163,3 @@ def handler(event, context):
         logger.error(e)
     logger.debug('Generating Reports finished')
 
-handler(None,None)
