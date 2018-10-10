@@ -9,9 +9,9 @@ img {
 }
 .logo {
     width: 175px; 
-    height: 50px;
+    height: 61px;
     float: right; 
-    margin: 5px;
+    margin: 15px;
 }
 .sort {
     width: 15px;
@@ -29,6 +29,7 @@ h1, h4, h5, h6 {
     text-align: center; 
     margin: 2px;
 }
+h5 { height: 18px; }
 table { 
     font-size: small; 
     border: 1px solid lightgrey; 
@@ -112,7 +113,7 @@ button, #account {
     background: linear-gradient(to left, aliceblue, transparent 400px), linear-gradient(aliceblue, dodgerblue, dodgerblue);
 }
 .active, .collapsible:hover { background-color: #555; }
-.collapsible:before { content: "\002B";color: white;float: left;margin-right: 10px; }
+.collapsible:before { content: "\002B"; color: white; margin-right: 10px; }
 .active:before { content: "\2212"; }
 .content { 
     padding: 0 12px;
