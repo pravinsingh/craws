@@ -1,7 +1,7 @@
 """ Base module for project Craws that is used in all compliance-rule implementations.
 """
 
-__version__ = '0.4.0'
+__version__ = '1.0.0'
 __author__ = 'Pravin Singh'
 
 import boto3
