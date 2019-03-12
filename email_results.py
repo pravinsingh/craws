@@ -1,7 +1,7 @@
 """ Goes through all the results in the s3 bucket and sends emails to intended recipients.
 """
 
-__version__ = '0.4.0'
+__version__ = '0.6.1'
 __author__ = 'Pravin Singh'
 
 import boto3
@@ -13,7 +13,9 @@ def create_email_body(account_id, s3_client, logger):
         response = s3_client.get_object(Bucket = craws.bucket, Key = 'res/stylesheet.css')
         style = response['Body'].read().decode()
         email_body = '<html>\n<head>\n<style>' + style + '</style>\n</head>\n<body>\n' +\
-            '<table width="100%" style="border-collapse:collapse"><th width="80%">Check</th><th width="20%">Result</th>'
+            '<img class="logo" src="https://s3-eu-west-1.amazonaws.com/craws/res/tibco-logo.png">\n' +\
+            '<h1>CRAWS</h1>\n<h5>Compliance Reporting for AWS</h5>\n' +\
+            '<table class="results-table"><th width="10%">Area</th><th width="70%">Check</th><th width="20%">Result</th>'
         result_url = ''
         response = s3_client.list_objects(Bucket = craws.bucket, Prefix = account_id)
         for result_file in response['Contents']:
@@ -29,26 +31,27 @@ def create_email_body(account_id, s3_client, logger):
                      int(result['YellowCount']) + int(result['GreyCount']))
             # If there are no results, it's considered Green
             if total == 0:
-                green = 100
-                red = orange = yellow = grey = 0
+                green_percent = 100
+                red_percent = orange_percent = yellow_percent = grey_percent = 0
             else:
-                green = int(result['GreenCount'])*100/total
-                red = int(result['RedCount'])*100/total
-                orange = int(result['OrangeCount'])*100/total
-                yellow = int(result['YellowCount'])*100/total
-                grey = int(result['GreyCount'])*100/total
-            email_body += ('<tr><td>' + result['Area'] + ': ' + result['Rule Name'] +
-                           '</td><td><table style="border-collapse:collapse"><tr>')
-            if green > 0:
-                email_body += '<td class="green-bar" width="' + str(green) + '%"></td>'
-            if red > 0:
-                email_body += '<td class="red-bar" width="' + str(red) + '%"></td>'
-            if orange > 0:
-                email_body += '<td class="orange-bar" width="' + str(orange) + '%"></td>'
-            if yellow > 0:
-                email_body += '<td class="yellow-bar" width="' + str(yellow) + '%"></td>'
-            if grey > 0:
-                email_body += '<td class="grey-bar" width="' + str(grey) + '%"></td>'
+                green_percent = int(result['GreenCount'])*100/total
+                red_percent = int(result['RedCount'])*100/total
+                orange_percent = int(result['OrangeCount'])*100/total
+                yellow_percent = int(result['YellowCount'])*100/total
+                grey_percent = int(result['GreyCount'])*100/total
+
+            email_body += ('<tr><td>' + result['Area'] + '</td><td>' + result['Rule Name'] +
+                           '</td><td><table class="bar"><tr>')
+            if green_percent > 0:
+                email_body += '<td class="green-bar" style="border: 1px solid white" width="' + str(green_percent) + '%"></td>'
+            if red_percent > 0:
+                email_body += '<td class="red-bar" style="border: 1px solid white" width="' + str(red_percent) + '%"></td>'
+            if orange_percent > 0:
+                email_body += '<td class="orange-bar" style="border: 1px solid white" width="' + str(orange_percent) + '%"></td>'
+            if yellow_percent > 0:
+                email_body += '<td class="yellow-bar" style="border: 1px solid white" width="' + str(yellow_percent) + '%"></td>'
+            if grey_percent > 0:
+                email_body += '<td class="grey-bar" style="border: 1px solid white" width="' + str(grey_percent) + '%"></td>'
             email_body += '</tr></table></td></tr>'
         email_body += '</table><br/>'
 
@@ -77,7 +80,7 @@ def send_email(email_body, key, ses_client, logger):
     }
     message = {
         'Subject': {
-            'Data': 'Craws results: ' + display_name + ' (' + account_id + ')'
+            'Data': 'Craws Results: ' + display_name + ' (' + account_id + ')'
         },
         'Body': {
             'Html': {
