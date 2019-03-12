@@ -1,7 +1,7 @@
 """ This rule checks the aws account password policy"
 """
 
-__version__ = '0.4.1'
+__version__ = '0.4.2'
 __author__ = 'Bhupender Kumar'
 
 import boto3
@@ -31,9 +31,9 @@ def handler(event, context):
             # This rule has not been executed today for this account, go ahead and execute
             results = {'Rule Name': 'Account Password Policy'}
             results['Area'] = 'IAM'
-            results['Description'] = 'Enforcing AWS IAM passwords strength, pattern and rotation is vital when it comes to maintaining the security of your AWS account.' +\
-                'Having a strong password policy in use will significantly reduce the risk of' +\
-                ' password-guessing and brute-force attacks.'
+            results['Description'] = 'Enforcing AWS IAM passwords strength, pattern and rotation is vital when it comes to maintaining ' +\
+                'the security of your AWS account. Having a strong password policy in use will significantly reduce the risk of ' +\
+                'password-guessing and brute-force attacks.'
             details = []
             try:
                 response = sts.assume_role(RoleArn=account['role_arn'], RoleSessionName='AccountPasswordPolicy')
@@ -48,7 +48,6 @@ def handler(event, context):
                                         aws_secret_access_key=credentials['SecretAccessKey'], 
                                         aws_session_token=credentials['SessionToken'])
             try:
-                result = []
                 response = iam_client.get_account_password_policy()
                 if bool(response['PasswordPolicy']) == False:
                     details.append({'Status': craws.status['Red'], 'Policy Detail': "Password policy set for the account"})
@@ -126,4 +125,4 @@ def handler(event, context):
             craws.upload_result_json(results, 'AccountPasswordPolicy.json', account['account_id'])
             logger.info('Results for accout %s uploaded to s3', account['account_id'])
 
-        logger.debug('Password policy check started')
+    logger.debug('Password policy check finished')

@@ -1,7 +1,7 @@
 """ This rule checks for any RDS Instances with BYOL License Model.
 """
 
-__version__ = '0.5.1'
+__version__ = '0.6.1'
 __author__ = 'Pravin Singh'
 
 import boto3
@@ -29,7 +29,8 @@ def handler(event, context):
             results = {'Rule Name': 'RDS Instances with BYOL License Model'}
             results['Area'] = 'RDS'
             results['Description'] = 'Identify any Oracle RDS instances configured with Bring-Your-Own-License (BYOL) license model. ' +\
-                'We should always create Oracle RDS instances with License-Attached license model.'
+                                    'We should always create Oracle RDS instances with License-Attached license model to avoid any ' +\
+                                    'licensing letated issues later.'
             details = []
             try:
                 response = sts.assume_role(RoleArn=account['role_arn'], RoleSessionName='RdsWithBYOL')
@@ -42,20 +43,24 @@ def handler(event, context):
 
             for region in regions:
                 rds_client = boto3.client('rds', region_name=region['Id'],
-                                            aws_access_key_id=credentials['AccessKeyId'], 
-                                            aws_secret_access_key=credentials['SecretAccessKey'], 
-                                            aws_session_token=credentials['SessionToken'])
+                                    aws_access_key_id=credentials['AccessKeyId'], 
+                                    aws_secret_access_key=credentials['SecretAccessKey'], 
+                                    aws_session_token=credentials['SessionToken'])
+                cloudtrail_client = boto3.client('cloudtrail', region_name=region['Id'],
+                                    aws_access_key_id=credentials['AccessKeyId'], 
+                                    aws_secret_access_key=credentials['SecretAccessKey'], 
+                                    aws_session_token=credentials['SessionToken'])
                 try:
                     result = []
                     response = rds_client.describe_db_instances()
                     for instance in response['DBInstances']:
                         if instance['LicenseModel'] is 'bring-your-own-license':
+                            instance['DBInstanceIdentifier'] = craws.get_cloudtrail_data(lookup_value=instance['DBInstanceIdentifier'], cloudtrail_client=cloudtrail_client)
                             result.append({'Instance ID':instance['DBInstanceIdentifier'], 'Name':instance['DBName'],
                                 'Engine':instance['Engine'], 'Master Username':instance['MasterUsername']})
                             orange_count += 1
                         else:
                             green_count += 1
-                            
                 except Exception as e:
                     logger.error(e)
                     # Exception occured, mark it as Grey (not checked)

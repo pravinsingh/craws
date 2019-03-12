@@ -1,7 +1,7 @@
 """ This rule checks whether CloudTrail is logging successfully in all regions.
 """
 
-__version__ = '0.3.1'
+__version__ = '0.3.3'
 __author__ = 'Biswa Singh'
 
 import boto3
@@ -29,10 +29,10 @@ def handler(event, context):
             results = {'Rule Name': 'CloudTrail Logging Status'}
             results['Area'] = 'CloudTrail'
             results['Description'] = 'Amazon Web Services provides CloudTrail service to log all activities carried out from AWS console or CLI. ' +\
-                'It is highly recommended to enable CloudTrail for all regions. This rule check cloudtrail logging status '
+                'It is highly recommended to enable CloudTrail for all regions for forensic purposes. This rule checks the status of trails in your account.'
             details = []
             try:
-                response = sts.assume_role(RoleArn=account['role_arn'], RoleSessionName='DisbledCloudTrail')
+                response = sts.assume_role(RoleArn=account['role_arn'], RoleSessionName='CloudTrailLoggingStatus')
             except Exception as e:
                 logger.error(e)
                 continue
@@ -41,24 +41,26 @@ def handler(event, context):
             green_count = red_count = orange_count = yellow_count = grey_count = 0
             
             for region in regions:
-                clooudtrail_client = boto3.client('cloudtrail', region_name=region['Id'],
+                cloudtrail_client = boto3.client('cloudtrail', region_name=region['Id'],
                                                     aws_access_key_id=credentials['AccessKeyId'],
                                                     aws_secret_access_key=credentials['SecretAccessKey'],
                                                     aws_session_token=credentials['SessionToken'])
                 try:
-                    trails = clooudtrail_client.describe_trails(includeShadowTrails=False)
+                    trails = cloudtrail_client.describe_trails(includeShadowTrails=False)
                     
                     for trail in trails['trailList']:
-                        response = clooudtrail_client.get_trail_status(Name=trail['Name'])
+                        response = cloudtrail_client.get_trail_status(Name=trail['Name'])
                         if response['IsLogging'] == True:
-                            #print(region['Id'] + '  ' + trail['Name'])
                             green_count += 1
-                            details.append({'Status': craws.status['Green'], 'CloudTrailName':trail['Name'], 'Logging':response['IsLogging'], 'Region': region['Id'] + " (" + region['ShortName'] + ")"})
+                            trail['Name'] = craws.get_cloudtrail_data(lookup_value=trail['Name'], cloudtrail_client=cloudtrail_client)
+                            details.append({'Status': craws.status['Green'], 'Trail Name':trail['Name'], 'Logging':response['IsLogging'], 'Region': region['Id'] + " (" + region['ShortName'] + ")"})
                         else:
                             red_count +=1
-                            details.append({'Status': craws.status['Green'], 'CloudTrailName':trail['Name'], 'Logging':response['IsLogging'], 'Region': region['Id'] + " (" + region['ShortName'] + ")"})
+                            trail['Name'] = craws.get_cloudtrail_data(lookup_value=trail['Name'], cloudtrail_client=cloudtrail_client)
+                            details.append({'Status': craws.status['Red'], 'Trail Name':trail['Name'], 'Logging':response['IsLogging'], 'Region': region['Id'] + " (" + region['ShortName'] + ")"})
                 except Exception as e:
                     logger.error(e)
+                    details.append({'Status': craws.status['Grey'], 'Trail Name':trail['Name'], 'Logging':'', 'Region': region['Id'] + " (" + region['ShortName'] + ")"})
                 
             results['Details'] = details
             results['GreenCount'] = green_count

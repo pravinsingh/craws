@@ -1,18 +1,16 @@
 """ This rule checks default EC2 Security Groups in use.
 """
 
-__version__ = '0.5.0'
+__version__ = '0.6.0'
 __author__ = 'Bhupender Kumar'
 import boto3
 import craws
 import datetime
 
 
-
-
 def handler(event, context):
-    logger = craws.get_logger(name='')
-    logger.debug('default SG in use check started')
+    logger = craws.get_logger(name='DefaultSgInUse')
+    logger.debug('Default SG in Use check started')
 
     sts = boto3.client('sts')
     
@@ -34,7 +32,7 @@ def handler(event, context):
                 'enforce using custom and unique security groups that exercise the principle of least privilege.' 
             details = []
             try:
-                response = sts.assume_role(RoleArn=account['role_arn'], RoleSessionName='defaultSGinuse')
+                response = sts.assume_role(RoleArn=account['role_arn'], RoleSessionName='DefaultSgInUse')
             except Exception as e:
                 logger.error(e)
                 continue
@@ -52,6 +50,10 @@ def handler(event, context):
                                             aws_access_key_id=credentials['AccessKeyId'], 
                                             aws_secret_access_key=credentials['SecretAccessKey'], 
                                             aws_session_token=credentials['SessionToken'])
+                cloudtrail_client = boto3.client('cloudtrail', region_name=region['Id'],
+                                            aws_access_key_id=credentials['AccessKeyId'],
+                                            aws_secret_access_key=credentials['SecretAccessKey'],
+                                            aws_session_token=credentials['SessionToken'])
                 try:
                     result = []
                     default_sec_grps = []
@@ -60,8 +62,6 @@ def handler(event, context):
                         if sec_grp_details['Description'] == 'default VPC security group' and sec_grp_details['GroupName'] == 'default' and sec_grp_details['GroupId'] not in default_sec_grps:
                             default_sec_grps.append(sec_grp_details['GroupId'])
                             green_count += 1
-                    #print(len(default_sec_grps))
-                            #print(s1['GroupId'])
                         
                     network_interfaces = ec2_client.describe_network_interfaces()
                     for net_sec_grps in network_interfaces['NetworkInterfaces']:
@@ -71,10 +71,9 @@ def handler(event, context):
                                     # Some issues found, mark it as Red/Orange/Yellow depending on this check's risk level
                                     orange_count += 1
                                     green_count -= 1
+                                    sec_grp['GroupId'] = craws.get_cloudtrail_data(sec_grp['GroupId'], region['Id'], cloudtrail_client)
                                     result.append({'SG Id': sec_grp['GroupId'], 'InstanceId/ELB Name': net_sec_grps['Attachment']['InstanceId']})
-                                    #print("Attached to default SG" ,grp['GroupId'], ni['Attachment']['InstanceId']
                                 else:
-                                    #print("Not attached to default SG" ,grp['GroupId'], ni['Attachment']['InstanceId'])
                                     # All good, mark it as Green
                                     pass
                             except:
@@ -87,6 +86,7 @@ def handler(event, context):
                                 # Some issues found, mark it as Red/Orange/Yellow depending on this check's risk level
                                 orange_count += 1
                                 green_count -= 1
+                                elb_sg = craws.get_cloudtrail_data(elb_sg, region['Id'], cloudtrail_client)
                                 result.append({'SG Id': elb_sg, 'InstanceId/ELB Name': elb_details['LoadBalancerName']})
                         
                 except Exception as e:
@@ -112,4 +112,4 @@ def handler(event, context):
             craws.upload_result_json(results, 'DefaultSgInUse.json', account['account_id'])
             logger.info('Results for account %s uploaded to s3', account['account_id'])
 
-        logger.debug('default SG in use check finished')
+    logger.debug('Default SG in Use check finished')

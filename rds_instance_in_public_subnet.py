@@ -1,18 +1,15 @@
 """ This rule checks and reports RDS in public subnets.
 """
 
-__version__ = '0.6.0'
+__version__ = '0.7.0'
 __author__ = 'Bhupender Kumar'
 import boto3
 import craws
 import datetime
 
-
-
-
 def handler(event, context):
     logger = craws.get_logger(name='RDSinPublicSubnet', level='DEBUG')
-    logger.debug('RDS in public subnet check started')
+    logger.debug('RDS in Public Subnet check started')
 
     sts = boto3.client('sts')
     
@@ -30,8 +27,10 @@ def handler(event, context):
             # This rule has not been executed today for this account, go ahead and execute
             results = {'Rule Name': 'RDS in Public Subnet'}
             results['Area'] = 'RDS'
-            results['Description'] = 'Ensure that no AWS RDS database instances are provisioned inside VPC public subnets in order to protect them from direct exposure to the Internet. Since database instances are not Internet-facing '  +\
-                'and their management (running software updates, implementing security patches, etc) is done by Amazon, these instances should run only in private subnets.' 
+            results['Description'] = 'Ensure that no AWS RDS database instances are provisioned inside VPC public subnets in order ' +\
+                                    'to protect them from direct exposure to the Internet. Since database instances are not ' +\
+                                    'Internet-facing and their management (running software updates, implementing security patches, ' +\
+                                    'etc) is done by Amazon, these instances should run only in private subnets.'
             details = []
             try:
                 response = sts.assume_role(RoleArn=account['role_arn'], RoleSessionName='RDSinPublicSubnet')
@@ -46,27 +45,23 @@ def handler(event, context):
                 red_bool = orange_bool = False
             
                 ec2_client = boto3.client('ec2', region_name=region['Id'],
-                                            aws_access_key_id=credentials['AccessKeyId'], 
-                                            aws_secret_access_key=credentials['SecretAccessKey'], 
-                                            aws_session_token=credentials['SessionToken'])
-            
+                                    aws_access_key_id=credentials['AccessKeyId'], 
+                                    aws_secret_access_key=credentials['SecretAccessKey'], 
+                                    aws_session_token=credentials['SessionToken'])
                 rds_client = boto3.client('rds', region_name=region['Id'],
-                                            aws_access_key_id=credentials['AccessKeyId'], 
-                                            aws_secret_access_key=credentials['SecretAccessKey'], 
-                                            aws_session_token=credentials['SessionToken'])
+                                    aws_access_key_id=credentials['AccessKeyId'], 
+                                    aws_secret_access_key=credentials['SecretAccessKey'], 
+                                    aws_session_token=credentials['SessionToken'])
+                cloudtrail_client = boto3.client('cloudtrail', region_name=region['Id'],
+                                    aws_access_key_id=credentials['AccessKeyId'], 
+                                    aws_secret_access_key=credentials['SecretAccessKey'], 
+                                    aws_session_token=credentials['SessionToken'])
                 try:
-                
                     result = []
-                
                     public_subnets = []
-                
-                    #response = ec2_client.describe_internet_gateways()
                     response = ec2_client.describe_route_tables()
-                    #print(region['RegionName'])
                     for rtbl_details in response['RouteTables']:
-                    #print(v1)
                         for rtbl_comp in rtbl_details['Associations']:
-                        #print(v1['Associations']['SubnetId'], v2['GatewayId'])
                             for rtbl_routes in rtbl_details['Routes']:
                                 try:
                                     if rtbl_routes['GatewayId'].find("igw") == -1:
@@ -74,38 +69,33 @@ def handler(event, context):
                                     else:
                                         if rtbl_comp['SubnetId'] not in public_subnets:
                                             public_subnets.append(rtbl_comp['SubnetId'])
-                                            #print(v2['SubnetId'], v3['GatewayId'])
                                 except KeyError:
                                     continue
                 
                     resp = rds_client.describe_db_instances()
                     db_identifier = []
                     for db_details in resp['DBInstances']:
-                    #print(d1['DBSubnetGroup']['Subnets']):
                         for db_subnet in db_details['DBSubnetGroup']['Subnets']:
-                        #print(d1['DBInstanceIdentifier'], d2['SubnetIdentifier'])
                             if db_subnet['SubnetIdentifier'] in public_subnets:
                                 if db_details['PubliclyAccessible'] == False:
                                     # Some issues found, mark it as Red/Orange/Yellow depending on this check's risk level
                                     orange_count += 1
                                     orange_bool = True
-                                    result.append({'Subnet Group': db_subnet['SubnetIdentifier'], 'RDS Instance': db_details['DBInstanceIdentifier'], 'Publicly Accessible': db_details['PubliclyAccessible']})
+                                    instance_id = craws.get_cloudtrail_data(lookup_value=db_details['DBInstanceIdentifier'], cloudtrail_client=cloudtrail_client)
+                                    result.append({'Subnet Group': db_subnet['SubnetIdentifier'], 'RDS Instance': instance_id, 'Publicly Accessible': db_details['PubliclyAccessible']})
                                     db_identifier.append(db_details['DBInstanceIdentifier'])
-                                    #print("Problem", d1['DBInstanceIdentifier'], d2['SubnetIdentifier'], d1['PubliclyAccessible'])
                                 else:
                                     # Some issues found, mark it as Red/Orange/Yellow depending on this check's risk level
                                     red_count += 1
                                     orange_bool = True
                                     red_bool = True
-                                    result.append({'Subnet Group': db_subnet['SubnetIdentifier'], 'RDS Instance': db_details['DBInstanceIdentifier'], 'Publicly Accessible': db_details['PubliclyAccessible']})
+                                    instance_id = craws.get_cloudtrail_data(lookup_value=db_details['DBInstanceIdentifier'], cloudtrail_client=cloudtrail_client)
+                                    result.append({'Subnet Group': db_subnet['SubnetIdentifier'], 'RDS Instance': instance_id, 'Publicly Accessible': db_details['PubliclyAccessible']})
                                     db_identifier.append(db_details['DBInstanceIdentifier'])
-                                
                             else:
-                                #print("Safe", d1['DBInstanceIdentifier'], d2['SubnetIdentifier'], d1['PubliclyAccessible'])
                                 if db_details['DBInstanceIdentifier'] not in db_identifier:
-                                    green_count += 1
                                     # All good, mark it as Green
-                            
+                                    green_count += 1
                 except Exception as e:
                     logger.error(e)
                     # Exception occured, mark it as Grey (not checked)
@@ -122,8 +112,6 @@ def handler(event, context):
                 else:
                     # All good, mark it as Green
                     details.append({'Status': craws.status['Green'], 'Region': region['Id'] + " (" + region['ShortName'] + ")", 'Result': result})
-                
-
 
             results['Details'] = details
             results['GreenCount'] = green_count
@@ -134,4 +122,4 @@ def handler(event, context):
             craws.upload_result_json(results, 'RDSinPublicSubnet.json', account['account_id'])
             logger.info('Results for account %s uploaded to s3', account['account_id'])
 
-        logger.debug('RDS in public subnet check finished')
+    logger.debug('RDS in Public Subnet check finished')

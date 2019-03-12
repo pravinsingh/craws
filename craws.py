@@ -37,7 +37,7 @@ bucket = 'craws'
     },
 ]
 ``display_name``: The common name this account is referred to as.
-``role_arn``: The role that will be used to run the analysis. This role should have read access in its accounts and should \
+``role_arn``: The role that will be used to run the analysis. This role should have read access in its account and should \
 have the role crawsExecution (arn:aws:iam::926760075421:role/crawsExecution) as a trusted entity.
 ``emails``: Recipients of the report. It's a list of comma separated values.
 """
@@ -142,7 +142,7 @@ def get_region_descriptions():
         boto_regions = endpoints['partitions'][0]['regions']
         for ec2_region in _ec2_client.describe_regions()['Regions']:
             if ec2_region['RegionName'] not in boto_regions:
-                boto_regions[ec2_region['RegionName']] = {'description': ec2_region['RegionName']}
+                boto_regions[ec2_region['RegionName']] = {'description': ec2_region['RegionName']+'( )'}
             id = ec2_region['RegionName']
             full_name = boto_regions[ec2_region['RegionName']]['description']
             short_name = str(full_name)[full_name.find('(')+1:full_name.find(')')]
@@ -151,13 +151,13 @@ def get_region_descriptions():
     except Exception as e:
         _logger.error(e)
 
-def get_cloudtrail_data(lookup_value, region_id, cloudtrail_client):
+def get_cloudtrail_data(lookup_value, cloudtrail_client, region_id='us-east-1'):
     """ Get CloudTrail data for the item. Creates a summary to be shown in tooltip and a link to the CloudTrail event log. \
-    The returned value should replace the lookup value in the calling function (since it anyways returns the oroginal lookup \
+    The returned value should replace the lookup value in the calling function (since it anyways returns the original lookup \
     value in case there are no CloudTrail logs).\n
         ``lookup_value``: The Id/name of the resource to be looked up\n
-        ``region_id``: Region Id of the resource\n
         ``cloudtrail_client``: CloudTrail client for the account containing the resource
+        ``region_id``: Region Id of the resource, defaults to 'us-east-1' for global resources\n
     """
     try:
         cloudtrail_link = ('https://' + region_id + '.console.aws.amazon.com/cloudtrail/home?region=' + region_id 
@@ -176,8 +176,8 @@ def get_cloudtrail_data(lookup_value, region_id, cloudtrail_client):
         _logger.error(e)
         return lookup_value
 
-def get_logger(name='', level='WARNING'):
-    """ Get the Python logger. By default, the level is set to WARNING but can be changed as needed.\n
+def get_logger(name='', level='DEBUG'):
+    """ Get the Python logger. By default, the level is set to DEBUG but can be changed as needed.\n
     ``name``: Set it to the filename you are calling it from\n
     ``level``: Text logging level for the message ('DEBUG' | 'INFO' | 'WARNING' | 'ERROR' | 'CRITICAL')
     """

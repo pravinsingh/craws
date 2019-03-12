@@ -9,7 +9,7 @@ import datetime
 
 def handler(event, context):
     logger = craws.get_logger(name='UnusedSecurityGroups', level='DEBUG')
-    logger.debug('Unused security groups check started')
+    logger.debug('Unused Security Groups check started')
 
     sts = boto3.client('sts')
     
@@ -93,5 +93,5 @@ def handler(event, context):
             craws.upload_result_json(results, 'UnusedSecurityGroups.json', account['account_id'])
             logger.info('Results for account %s uploaded to s3', account['account_id'])
 
-    logger.debug('Unused security groups check finished')
+    logger.debug('Unused Security Groups check finished')
 

@@ -1,7 +1,7 @@
 """ This rule checks whether MFA (Multi Factor Authentication) is enabled for all IAM users as well as the root account.
 """
 
-__version__ = '0.5.1'
+__version__ = '1.0.0'
 __author__ = 'Pravin Singh'
 
 import boto3
@@ -47,6 +47,10 @@ def handler(event, context):
                                         aws_access_key_id=credentials['AccessKeyId'], 
                                         aws_secret_access_key=credentials['SecretAccessKey'], 
                                         aws_session_token=credentials['SessionToken'])
+            cloudtrail_client = boto3.client('cloudtrail', region_name='us-east-1',
+                                        aws_access_key_id=credentials['AccessKeyId'], 
+                                        aws_secret_access_key=credentials['SecretAccessKey'], 
+                                        aws_session_token=credentials['SessionToken'])
             try:
                 while (iam_client.generate_credential_report()['State'] != 'COMPLETE'):
                     time.sleep(1)
@@ -61,13 +65,16 @@ def handler(event, context):
                         if row['mfa_active'] == 'false':
                             # Ignore the non-console users and show them as Grey
                             if row['password_enabled'] == 'false':
+                                row['user'] = craws.get_cloudtrail_data(lookup_value=row['user'], cloudtrail_client=cloudtrail_client)
                                 details.append({'User Name': row['user'], 'ARN': row['arn'], 'Status': craws.status['Grey']})
                                 grey_count += 1
                             else:
+                                row['user'] = craws.get_cloudtrail_data(lookup_value=row['user'], cloudtrail_client=cloudtrail_client)
                                 details.append({'User Name': row['user'], 'ARN': row['arn'], 'Status': craws.status['Red']})
                                 red_count += 1
                         else:
                             # All good, mark it as Green
+                            row['user'] = craws.get_cloudtrail_data(lookup_value=row['user'], cloudtrail_client=cloudtrail_client)
                             details.append({'User Name': row['user'], 'ARN': row['arn'], 'Status': craws.status['Green']})
                             green_count += 1
                     except Exception as e:

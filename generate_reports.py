@@ -147,7 +147,7 @@ def handler(event, context):
                                 aws_session_token=response['Credentials']['SessionToken'])
 
     try:
-        today = str(datetime.datetime.now().date())
+        today = '2019-03-11' #str(datetime.datetime.now().date())
         response = s3_client.list_objects(Bucket = craws.bucket, Prefix = today)
         for account in response['Contents']:
             key = account['Key']

@@ -1,7 +1,7 @@
 """ This rule checks whether CloudTrail is enabled for all regions.
 """
 
-__version__ = '0.3.0'
+__version__ = '0.3.1'
 __author__ = 'Biswa Singh'
 
 import boto3
@@ -29,7 +29,8 @@ def handler(event, context):
             results = {'Rule Name': 'Disabled CloudTrail'}
             results['Area'] = 'CloudTrail'
             results['Description'] = 'Amazon Web Services provides CloudTrail service to log all activities carried out from AWS console or CLI. ' +\
-                'It is highly recommended to enable CloudTrail for all regions.'
+                'It is highly recommended to enable CloudTrail for all regions for forensic purposes. ' +\
+                'This rule checks whether CloudTrail is enabled in every region.'
             details = []
             try:
                 response = sts.assume_role(RoleArn=account['role_arn'], RoleSessionName='DisbledCloudTrail')
