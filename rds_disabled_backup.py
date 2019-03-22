@@ -1,7 +1,7 @@
 """ This rule checks whether RDS instances have disabled automated backup.
 """
 
-__version__ = '0.3.0'
+__version__ = '0.3.1'
 __author__ = 'Anmol Saini'
 
 import boto3
@@ -56,9 +56,10 @@ def handler(event, context):
                     response = rds_client.describe_db_instances()
                     for instance in response['DBInstances']:
                         if instance['BackupRetentionPeriod'] == 0:
-                            instance['DBInstanceIdentifier'] = craws.get_cloudtrail_data(lookup_value=instance['DBInstanceIdentifier'], cloudtrail_client=cloudtrail_client)
+                            instance['DBInstanceIdentifier'] = craws.get_cloudtrail_data(lookup_value=instance['DBInstanceIdentifier'], 
+                                    cloudtrail_client=cloudtrail_client, region_id=region['Id'])
                             result.append({'Instance ID':instance['DBInstanceIdentifier'], 'Name':instance['DBName'],
-                                'Engine':instance['Engine'], 'Master Username':instance['MasterUsername']})
+                                    'Engine':instance['Engine'], 'Master Username':instance['MasterUsername']})
                 except Exception as e:
                     logger.error(e)
                     # Exception occured, mark it as Grey (not checked)

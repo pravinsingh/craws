@@ -1,7 +1,7 @@
 """ This rule checks for certificate expiry.
 """
 
-__version__ = '0.1.0'
+__version__ = '0.1.1'
 __author__ = 'Govarthanan Rajappan'
 
 import craws
@@ -42,15 +42,8 @@ def handler(event, context):
             regions = craws.get_region_descriptions()
             green_count = red_count = orange_count = yellow_count = grey_count = 0
             
-            
             for region in regions:
-                #print (region['Id'])
-                red_bool = orange_bool = False
-                region_red_count = region_orange_count = region_grey_count = region_green_count = 0
-                ec2_client = boto3.client('ec2', region_name=region['Id'],
-                                            aws_access_key_id=credentials['AccessKeyId'], 
-                                            aws_secret_access_key=credentials['SecretAccessKey'], 
-                                            aws_session_token=credentials['SessionToken'])
+                region_red_count = region_orange_count = region_green_count = 0
                 try:
                     result = []            
                     daysToCheck = 30
@@ -71,25 +64,21 @@ def handler(event, context):
                                                     if n == "DomainName":
                                                         DomainName = o
                                                     if n == "NotAfter":
-                                                        ExpirationDate = o
                                                         margin = datetime.timedelta(days = daysToCheck)
                                                         today = datetime.date.today()
                                                         if (today <= o.date() <= today + margin):
                                                             result.append({'CertificateArn': k, 'Domain Name': DomainName, 'Expiration': str(o)})
                                                             red_count += 1
                                                             region_red_count += 1
-                                                            red_bool = True
                                                         elif (o.date() < today):
                                                             result.append({'CertificateArn': k, 'Domain Name': DomainName, 'Expiration': str(o)})
                                                             orange_count += 1
                                                             region_orange_count += 1
-                                                            orange_bool = True
                                                         else:
                                                             green_count += 1
                                                             region_green_count += 1
                                                             # All good, mark it as Green
                 except Exception as e:
-                    print (e)
                     logger.error(e)
                     # Exception occured, mark it as Grey (not checked)
                     details.append({'Status': craws.status['Grey'], 'Region': region['Id'] + " (" + region['ShortName'] + ")", 'Result': result})

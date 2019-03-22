@@ -1,7 +1,7 @@
 """ This rule checks for any unattached Elastic IPs currently available.
 """
 
-__version__ = '0.6.0'
+__version__ = '0.6.1'
 __author__ = 'Pravin Singh'
 
 import boto3
@@ -63,7 +63,8 @@ def handler(event, context):
                                         name = tag['Value']
                                         break
 
-                            address['PublicIp'] = craws.get_cloudtrail_data(address['PublicIp'], region['Id'], cloudtrail_client)
+                            address['PublicIp'] = craws.get_cloudtrail_data(lookup_value=address['PublicIp'], 
+                                            cloudtrail_client=cloudtrail_client, region_id=region['Id'])
                             result.append({'Elastic IP':address['PublicIp'], 'Name':name})
                             yellow_count += 1
                 except Exception as e:

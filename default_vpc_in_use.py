@@ -1,7 +1,7 @@
 """ This rule checks for EC2 instances in default or no VPC.
 """
 
-__version__ = '0.2.0'
+__version__ = '0.2.1'
 __author__ = 'Bhupender Kumar'
 import boto3
 import craws
@@ -64,7 +64,8 @@ def handler(event, context):
                                 if instance_details['VpcId'] == default_vpc:
                                     # Some issues found, mark it as Red/Orange/Yellow depending on this check's risk level
                                     orange_count += 1
-                                    instance_details['InstanceId'] = craws.get_cloudtrail_data(lookup_value=instance_details['InstanceId'], cloudtrail_client=cloudtrail_client)
+                                    instance_details['InstanceId'] = craws.get_cloudtrail_data(lookup_value=instance_details['InstanceId'], 
+                                            cloudtrail_client=cloudtrail_client, region_id=region['Id'])
                                     result.append({'VPC Id': default_vpc, 'Instance Id': instance_details['InstanceId']})
                                 else:
                                     # All good, mark it as Green

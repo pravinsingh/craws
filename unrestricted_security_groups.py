@@ -1,7 +1,7 @@
 """ This rule checks for any unrestriced security groups.
 """
 
-__version__ = '0.7.0'
+__version__ = '0.7.1'
 __author__ = 'Bhupender Kumar'
 import boto3
 import craws
@@ -64,7 +64,7 @@ def handler(event, context):
                                             orange_bool = True
                                             red_bool = True
                                             sec_grp_details['GroupId'] = craws.get_cloudtrail_data(lookup_value=sec_grp_details['GroupId'], 
-                                                    cloudtrail_client=cloudtrail_client)
+                                                    cloudtrail_client=cloudtrail_client, region_id=region['Id'])
                                             result.append({'SG Id': sec_grp_details['GroupId'], 'Name': sec_grp_details['GroupName'], 
                                                     'Opened Port(From)': sec_grp_perms['FromPort'], 'Opened Port(To)': sec_grp_perms['ToPort'], 
                                                     'Protocol Type':sec_grp_perms['IpProtocol'], 'CIDR': sec_grp_rules['CidrIp']})
@@ -73,7 +73,7 @@ def handler(event, context):
                                             orange_bool = True
                                             red_bool = True
                                             sec_grp_details['GroupId'] = craws.get_cloudtrail_data(lookup_value=sec_grp_details['GroupId'], 
-                                                    cloudtrail_client=cloudtrail_client)
+                                                    cloudtrail_client=cloudtrail_client, region_id=region['Id'])
                                             result.append({'SG Id': sec_grp_details['GroupId'], 'Name': sec_grp_details['GroupName'], 
                                                     'Opened Port(From)': sec_grp_perms['FromPort'], 'Opened Port(To)': sec_grp_perms['ToPort'], 
                                                     'Protocol Type':sec_grp_perms['IpProtocol'], 'CIDR': sec_grp_rules['CidrIp']})
@@ -82,7 +82,7 @@ def handler(event, context):
                                             green_count += 1
                                         else:
                                             sec_grp_details['GroupId'] = craws.get_cloudtrail_data(lookup_value=sec_grp_details['GroupId'], 
-                                                    cloudtrail_client=cloudtrail_client)
+                                                    cloudtrail_client=cloudtrail_client, region_id=region['Id'])
                                             result.append({'SG Id': sec_grp_details['GroupId'], 'Name': sec_grp_details['GroupName'], 
                                                     'Opened Port(From)': sec_grp_perms['FromPort'], 'Opened Port(To)': sec_grp_perms['ToPort'], 
                                                     'Protocol Type':sec_grp_perms['IpProtocol'], 'CIDR': sec_grp_rules['CidrIp']})

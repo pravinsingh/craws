@@ -1,7 +1,7 @@
 """ This rule checks default EC2 Security Groups in use.
 """
 
-__version__ = '0.6.0'
+__version__ = '0.6.1'
 __author__ = 'Bhupender Kumar'
 import boto3
 import craws
@@ -71,7 +71,7 @@ def handler(event, context):
                                     # Some issues found, mark it as Red/Orange/Yellow depending on this check's risk level
                                     orange_count += 1
                                     green_count -= 1
-                                    sec_grp['GroupId'] = craws.get_cloudtrail_data(sec_grp['GroupId'], region['Id'], cloudtrail_client)
+                                    sec_grp['GroupId'] = craws.get_cloudtrail_data(sec_grp['GroupId'], cloudtrail_client, region['Id'])
                                     result.append({'SG Id': sec_grp['GroupId'], 'InstanceId/ELB Name': net_sec_grps['Attachment']['InstanceId']})
                                 else:
                                     # All good, mark it as Green
@@ -86,7 +86,7 @@ def handler(event, context):
                                 # Some issues found, mark it as Red/Orange/Yellow depending on this check's risk level
                                 orange_count += 1
                                 green_count -= 1
-                                elb_sg = craws.get_cloudtrail_data(elb_sg, region['Id'], cloudtrail_client)
+                                elb_sg = craws.get_cloudtrail_data(elb_sg, cloudtrail_client, region['Id'])
                                 result.append({'SG Id': elb_sg, 'InstanceId/ELB Name': elb_details['LoadBalancerName']})
                         
                 except Exception as e:

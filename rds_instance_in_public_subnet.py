@@ -1,7 +1,7 @@
 """ This rule checks and reports RDS in public subnets.
 """
 
-__version__ = '0.7.0'
+__version__ = '0.7.1'
 __author__ = 'Bhupender Kumar'
 import boto3
 import craws
@@ -81,16 +81,20 @@ def handler(event, context):
                                     # Some issues found, mark it as Red/Orange/Yellow depending on this check's risk level
                                     orange_count += 1
                                     orange_bool = True
-                                    instance_id = craws.get_cloudtrail_data(lookup_value=db_details['DBInstanceIdentifier'], cloudtrail_client=cloudtrail_client)
-                                    result.append({'Subnet Group': db_subnet['SubnetIdentifier'], 'RDS Instance': instance_id, 'Publicly Accessible': db_details['PubliclyAccessible']})
+                                    instance_id = craws.get_cloudtrail_data(lookup_value=db_details['DBInstanceIdentifier'], 
+                                            cloudtrail_client=cloudtrail_client, region_id=region['Id'])
+                                    result.append({'Subnet Group': db_subnet['SubnetIdentifier'], 'RDS Instance': instance_id, 
+                                            'Publicly Accessible': db_details['PubliclyAccessible']})
                                     db_identifier.append(db_details['DBInstanceIdentifier'])
                                 else:
                                     # Some issues found, mark it as Red/Orange/Yellow depending on this check's risk level
                                     red_count += 1
                                     orange_bool = True
                                     red_bool = True
-                                    instance_id = craws.get_cloudtrail_data(lookup_value=db_details['DBInstanceIdentifier'], cloudtrail_client=cloudtrail_client)
-                                    result.append({'Subnet Group': db_subnet['SubnetIdentifier'], 'RDS Instance': instance_id, 'Publicly Accessible': db_details['PubliclyAccessible']})
+                                    instance_id = craws.get_cloudtrail_data(lookup_value=db_details['DBInstanceIdentifier'], 
+                                            cloudtrail_client=cloudtrail_client, region_id=region['Id'])
+                                    result.append({'Subnet Group': db_subnet['SubnetIdentifier'], 'RDS Instance': instance_id, 
+                                            'Publicly Accessible': db_details['PubliclyAccessible']})
                                     db_identifier.append(db_details['DBInstanceIdentifier'])
                             else:
                                 if db_details['DBInstanceIdentifier'] not in db_identifier:

@@ -1,7 +1,7 @@
 """ This rule checks for s3 buckets with 'WRITE_ACP' access open to everyone.
 """
 
-__version__ = '0.3.0'
+__version__ = '0.3.1'
 __author__ = 'Pravin Singh'
 
 import boto3
@@ -60,7 +60,8 @@ def handler(event, context):
                                     and (grant['Permission'] == 'WRITE_ACP' or grant['Permission'] == 'FULL_CONTROL')):
                             found = True
                             break
-                    bucket['Name'] = craws.get_cloudtrail_data(lookup_value=bucket['Name'], cloudtrail_client=cloudtrail_client)
+                    bucket['Name'] = craws.get_cloudtrail_data(lookup_value=bucket['Name'], 
+                                    cloudtrail_client=cloudtrail_client, region_id=bucket_location)
                     if found == True:
                         # Some issues found, mark it as Red/Orange/Yellow depending on this check's risk level
                         details.append({'Status': craws.status['Red'], 'Bucket':bucket['Name'], 

@@ -1,7 +1,7 @@
 """ This rule checks for any RDS instances with disabled Multi-AZ option in production AWS account.
 """
 
-__version__ = '0.2.0'
+__version__ = '0.2.1'
 __author__ = 'Bhupender Kumar'
 
 import boto3
@@ -57,13 +57,15 @@ def handler(event, context):
                         try:
                             
                             if instance['MultiAZ'] == False:
-                                instance_id = craws.get_cloudtrail_data(lookup_value=instance['DBInstanceIdentifier'], cloudtrail_client=cloudtrail_client)
+                                instance_id = craws.get_cloudtrail_data(lookup_value=instance['DBInstanceIdentifier'], 
+                                    cloudtrail_client=cloudtrail_client, region_id=region['Id'])
                                 result.append({'DBInstance ID':instance_id, 'Engine':instance['Engine'], 'Multi-AZ': instance['MultiAZ']})
                                 red_count += 1
                             else:
                                 green_count += 1
                         except:
-                            instance_id = craws.get_cloudtrail_data(lookup_value=instance['DBInstanceIdentifier'], cloudtrail_client=cloudtrail_client)
+                            instance_id = craws.get_cloudtrail_data(lookup_value=instance['DBInstanceIdentifier'], 
+                                    cloudtrail_client=cloudtrail_client, region_id=region['Id'])
                             result.append({'DBInstance ID':instance_id, 'Engine':instance['Engine'], 'Multi-AZ': "Not Checked. Please verify."})
                 except Exception as e:
                     # Exception occured, mark it as Grey (not checked)

@@ -1,7 +1,7 @@
 """ This rule checks for any RDS Instances with Magnetic Storage Type.
 """
 
-__version__ = '0.2.0'
+__version__ = '0.2.1'
 __author__ = 'Bhupender Kumar'
 
 import boto3
@@ -55,13 +55,15 @@ def handler(event, context):
                     for instance in response['DBInstances']:
                         try:
                             if instance['StorageType'] == 'standard':
-                                instance_id = craws.get_cloudtrail_data(lookup_value=instance['DBInstanceIdentifier'], cloudtrail_client=cloudtrail_client)
+                                instance_id = craws.get_cloudtrail_data(lookup_value=instance['DBInstanceIdentifier'], 
+                                    cloudtrail_client=cloudtrail_client, region_id=region['Id'])
                                 result.append({'DBInstance ID':instance_id, 'Engine':instance['Engine'], 'Storage Type': instance['StorageType']})
                                 red_count += 1
                             else:
                                 green_count += 1
                         except:
-                            instance_id = craws.get_cloudtrail_data(lookup_value=instance['DBInstanceIdentifier'], cloudtrail_client=cloudtrail_client)
+                            instance_id = craws.get_cloudtrail_data(lookup_value=instance['DBInstanceIdentifier'], 
+                                    cloudtrail_client=cloudtrail_client, region_id=region['Id'])
                             result.append({'DBInstance ID':instance_id, 'Engine':instance['Engine'], 'Storage Type': "Not Checked. Please verify."})
                 except Exception as e:
                     logger.error(e)

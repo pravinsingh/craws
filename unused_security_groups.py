@@ -1,7 +1,7 @@
 """ This rule checks for any unused security groups in AWS account.
 """
 
-__version__ = '0.6.1'
+__version__ = '0.6.2'
 __author__ = 'Bhupender Kumar'
 import boto3
 import craws
@@ -27,8 +27,8 @@ def handler(event, context):
             # This rule has not been executed today for this account, go ahead and execute
             results = {'Rule Name': 'Unused Custom Security Groups'}
             results['Area'] = 'EC2'
-            results['Description'] = 'This rule checks the unused and dangling custom security groups in the AWS account. Security groups that'  +\
-                ' are not attached to any resource should be deleted to minimize the surface of attack.'
+            results['Description'] = 'This rule checks the unused and dangling custom security groups in the AWS account. Security '  +\
+                'groups that are not attached to any resource should be deleted to minimize the surface of attack.'
             details = []
             try:
                 response = sts.assume_role(RoleArn=account['role_arn'], RoleSessionName='unused_SG')
@@ -51,7 +51,8 @@ def handler(event, context):
                 try:
                     result = []
                     sgrps = ec2_client.describe_security_groups()
-                    default_sgrps = set([sg['GroupId'] for sg in sgrps['SecurityGroups'] if sg['Description'] == 'default VPC security group' and sg['GroupName'] == 'default'])
+                    default_sgrps = set([sg['GroupId'] for sg in sgrps['SecurityGroups'] if 
+                                            sg['Description'] == 'default VPC security group' and sg['GroupName'] == 'default'])
                     all_sgrps = set([sg['GroupId'] for sg in sgrps['SecurityGroups']])
                     cstm_sgrps = set()
                     cstm_sgrps = all_sgrps - default_sgrps
@@ -67,7 +68,8 @@ def handler(event, context):
                         # Some issues found, mark it as Red/Orange/Yellow depending on this check's risk level
                         #details.append({'Status': craws.status['Red'], 'Region': region['Id'] + " (" + region['ShortName'] + ")", 'Result': result})
                         orange_count += 1
-                        unused_sec_grp = craws.get_cloudtrail_data(unused_sec_grp, region['Id'], cloudtrail_client)
+                        unused_sec_grp = craws.get_cloudtrail_data(lookup_value=unused_sec_grp, 
+                                            cloudtrail_client=cloudtrail_client, region_id=region['Id'])
                         result.append({'Security Group Id': unused_sec_grp})
                     
                 except Exception as e:

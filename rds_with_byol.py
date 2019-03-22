@@ -1,7 +1,7 @@
 """ This rule checks for any RDS Instances with BYOL License Model.
 """
 
-__version__ = '0.6.1'
+__version__ = '0.6.2'
 __author__ = 'Pravin Singh'
 
 import boto3
@@ -55,9 +55,10 @@ def handler(event, context):
                     response = rds_client.describe_db_instances()
                     for instance in response['DBInstances']:
                         if instance['LicenseModel'] is 'bring-your-own-license':
-                            instance['DBInstanceIdentifier'] = craws.get_cloudtrail_data(lookup_value=instance['DBInstanceIdentifier'], cloudtrail_client=cloudtrail_client)
+                            instance['DBInstanceIdentifier'] = craws.get_cloudtrail_data(lookup_value=instance['DBInstanceIdentifier'], 
+                                    cloudtrail_client=cloudtrail_client, region_id=region['Id'])
                             result.append({'Instance ID':instance['DBInstanceIdentifier'], 'Name':instance['DBName'],
-                                'Engine':instance['Engine'], 'Master Username':instance['MasterUsername']})
+                                    'Engine':instance['Engine'], 'Master Username':instance['MasterUsername']})
                             orange_count += 1
                         else:
                             green_count += 1

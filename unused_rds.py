@@ -1,7 +1,7 @@
 """ This rule checks Idle/Unused RDS instances.
 """
 
-__version__ = '0.3.0'
+__version__ = '0.3.1'
 __author__ = 'Anmol Saini'
 import boto3
 import craws
@@ -28,9 +28,10 @@ def handler(event, context):
             results = {'Rule Name': 'Idle RDS Instances'}
             results['Area'] = 'RDS'
             results['Description'] = 'Ensure that no AWS RDS database instances is Idle/Unused to help lower the cost of our monthly AWS bill. ' + \
-                                    'An RDS instance is considered &#39;idle&#39; when it meets the following criteria (to declare the instance &#39;idle&#39; both conditions must be true): ' + \
-    				                '<br>- The average number of database connections has been less than 1 for the last 7 days. ' + \
-    				                '<br>- The total number of database ReadIOPS and WriteIOPS recorded per day for the last 7 days has been less than 20 on average. '
+                                    'An RDS instance is considered &#39;idle&#39; when it meets the following criteria (to declare the instance ' +\
+                                    '&#39;idle&#39; both conditions must be true): ' + \
+    				                '<br> - The average number of database connections has been less than 1 for the last 7 days. ' + \
+    				                '<br> - The total number of database ReadIOPS and WriteIOPS recorded per day for the last 7 days has been less than 20 on average.'
             details = []
             try:
                 response = sts.assume_role(RoleArn=account['role_arn'], RoleSessionName='IdleRdsInstance')
@@ -96,7 +97,8 @@ def handler(event, context):
                             writeiops=response3['Datapoints'][0]['Average']
                                     
                             if (data < 1) and (readiops < 20) and (writeiops < 20):
-                                db['DBInstanceIdentifier'] = craws.get_cloudtrail_data(lookup_value=db['DBInstanceIdentifier'], cloudtrail_client=cloudtrail_client)
+                                db['DBInstanceIdentifier'] = craws.get_cloudtrail_data(lookup_value=db['DBInstanceIdentifier'], 
+                                        cloudtrail_client=cloudtrail_client, region_id=region['Id'])
                                 result.append({'Instance ID':db['DBInstanceIdentifier'],'Master Username':db['MasterUsername'],
                                         'Average DB Connections':"%.2f" % data,'Average ReadIOPS':"%.2f" % readiops,'Average WriteIOPS':"%.2f" % writeiops})
                                 yellow_count += 1
