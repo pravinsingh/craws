@@ -27,7 +27,7 @@ def handler(event, context):
             # This rule has not been executed today for this account, go ahead and execute
             results = {'Rule Name': 'EC2 Instances Scheduled for Maintenance'}
             results['Area'] = 'EC2'
-            results['Description'] = 'This rule checks if there are any EC2 Instances scheduled for Maintenance'
+            results['Description'] = 'This rule checks if there are any EC2 Instances Scheduled for Maintenance'
             details = []
             try:
                 response = sts.assume_role(RoleArn=account['role_arn'], RoleSessionName='ec2_maintenance')
