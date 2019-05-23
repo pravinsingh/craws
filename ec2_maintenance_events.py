@@ -5,7 +5,6 @@ __version__ = '1.0.0'
 __author__ = 'Antony'
 import boto3
 import datetime
-import os
 import craws
 
 def handler(event, context):
