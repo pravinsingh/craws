@@ -56,13 +56,21 @@ def create_email_body(account_id, s3_client, logger):
         email_body += '</table><br/>'
 
         # Add the legends
-        email_body += ('<table style="width:100%;border:hidden"><tr>'
+        email_body += ('<hr><table style="width:100%;border:hidden"><tr>'
                         + craws.status['Green'] + craws.status['Red'] + craws.status['Orange']
-                        + craws.status['Yellow'] + craws.status['Grey'] + '</tr></table><br/>'
+                        + craws.status['Yellow'] + craws.status['Grey'] + '</tr></table><hr><br>'
         )
-        # Add the link to detailed results
+        # Add the button for detailed results
         if result_url:
-            email_body += 'For detailed findings, <a href="' + result_url + '">click here</a>.'
+            email_body += ('<div style="text-align: center; margin: 40px"> <a href="' + result_url 
+                        + '" style="border-radius:4px;padding:10px;padding-left:16px;padding-right:16px;'
+                        + 'background:dodgerblue;color:white;text-decoration:none;font-size:24px;'
+                        + 'text-transform:uppercase;font-weight:600;letter-spacing:1px"> View Detailed Report </a></div>')
+        # Add the footer and close the html body
+        email_body += ('<div style="font-size: small;color: dimgrey;background: lightgrey;padding: 5px;"><ul>'
+                        + '<li> TIBCO Confidential - Internal use only. Do not share with anyone outside TIBCO.</li>'
+                        + '<li> Have any feedback or suggestions on this report? Let us know at <a href="mailto:craws@tibco.com">craws@tibco.com</a>.</li>'
+                        + '</ul></div></body></html>')
         email_body += '</body></html>'
     except Exception as e:
         logger.error(e)
