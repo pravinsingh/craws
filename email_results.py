@@ -88,7 +88,7 @@ def send_email(email_body, key, ses_client, logger):
     }
     message = {
         'Subject': {
-            'Data': 'Craws Results: ' + display_name + ' (' + account_id + ')'
+            'Data': 'CRAWS Results: ' + display_name + ' (' + account_id + ')'
         },
         'Body': {
             'Html': {
