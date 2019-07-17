@@ -1,0 +1,23 @@
+version: 0.2
+
+phases:
+  install:
+    runtime-versions:
+      java: openjdk11
+    commands:
+      - pip install --upgrade awscli
+  pre_build:
+    commands:
+      - echo Build completed on `date`
+  build:
+    commands:
+      - echo Build started on `date`
+      - aws s3 cp s3://codebuild-eu-ireland-lambda-rules/zip-files/  ~/Downloads --recursive
+      - chmod 755 build_script.sh
+      - ./build_script.sh
+  post_build:
+    commands:
+      - echo Build completed on `date`
+
+
+   

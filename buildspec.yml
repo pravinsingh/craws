@@ -1,0 +1,113 @@
+version: 0.2
+
+#environment_variables:
+  #VAR1: "default"
+phases:
+  install:
+    runtime-versions:
+      java: openjdk11
+    commands:
+      - pip install --upgrade awscli
+  pre_build:
+    commands:
+      - echo Build completed on `date`
+      - zip -r access_keys_not_rotated.zip access_keys_not_rotated.py craws.py json2html.py
+      - zip -r acm_cert_expiry_check.zip acm_cert_expiry_check.py craws.py json2html.py
+      - zip -r cloudtrail_logging_status.zip cloudtrail_logging_status.py craws.py json2html.py
+      - zip -r default_sg_in_use.zip default_sg_in_use.py craws.py json2html.py
+      - zip -r default_vpc_in_use.zip default_vpc_in_use.py craws.py json2html.py
+      - zip -r disabled_cloudtrail.zip disabled_cloudtrail.py craws.py json2html.py
+      - zip -r ec2_instances_distribution.zip ec2_instances_distribution.py craws.py json2html.py
+      - zip -r ec2_maintenance_events.zip ec2_maintenance_events.py craws.py json2html.py
+      - zip -r email_results.zip email_results.py craws.py json2html.py
+      - zip -r generate_reports.zip generate_reports.py craws.py json2html.py
+      - zip -r iam_cert_expiry_check.zip iam_cert_expiry_check.py craws.py json2html.py
+      - zip -r mfa_not_enabled.zip mfa_not_enabled.py craws.py json2html.py
+      - zip -r multiple_access_keys.zip multiple_access_keys.py craws.py json2html.py
+      - zip -r password_policy.zip password_policy.py craws.py json2html.py
+      - zip -r rds_disabled_backup.zip rds_disabled_backup.py craws.py json2html.py
+      - zip -r rds_instance_in_public_subnet.zip rds_instance_in_public_subnet.py craws.py json2html.py
+      - zip -r rds_with_byol.zip rds_with_byol.py craws.py json2html.py
+      - zip -r rds_with_magnetic_storage.zip rds_with_magnetic_storage.py craws.py json2html.py
+      - zip -r rds_with_multiaz_disabled.zip rds_with_multiaz_disabled.py craws.py json2html.py
+      - zip -r s3_public_list.zip s3_public_list.py craws.py json2html.py
+      - zip -r s3_public_read_acp.zip s3_public_read_acp.py craws.py json2html.py
+      - zip -r s3_public_write.zip s3_public_write.py craws.py json2html.py
+      - zip -r s3_public_write_acp.zip s3_public_write_acp.py craws.py json2html.py
+      - zip -r unrestricted_security_groups.zip unrestricted_security_groups.py craws.py json2html.py
+      - zip -r unused_access_keys.zip unused_access_keys.py craws.py json2html.py
+      - zip -r unused_elastic_ips.zip unused_elastic_ips.py craws.py json2html.py
+      - zip -r unused_rds.zip unused_rds.py craws.py json2html.py
+      - zip -r unused_security_groups.zip unused_security_groups.py craws.py json2html.py
+  build:
+    commands:
+      - echo Build started on `date`
+      - aws s3 rm --recursive s3://codebuild-eu-ireland-lambda-rules/zip-files/
+  post_build:
+    commands:
+      - echo Build completed on `date` 
+      - aws s3 cp access_keys_not_rotated.zip s3://codebuild-eu-ireland-lambda-rules/zip-files/
+      - aws s3 cp acm_cert_expiry_check.zip s3://codebuild-eu-ireland-lambda-rules/zip-files/
+      - aws s3 cp cloudtrail_logging_status.zip s3://codebuild-eu-ireland-lambda-rules/zip-files/
+      - aws s3 cp default_sg_in_use.zip s3://codebuild-eu-ireland-lambda-rules/zip-files/
+      - aws s3 cp default_vpc_in_use.zip s3://codebuild-eu-ireland-lambda-rules/zip-files/
+      - aws s3 cp disabled_cloudtrail.zip s3://codebuild-eu-ireland-lambda-rules/zip-files/
+      - aws s3 cp ec2_instances_distribution.zip s3://codebuild-eu-ireland-lambda-rules/zip-files/
+      - aws s3 cp ec2_maintenance_events.zip s3://codebuild-eu-ireland-lambda-rules/zip-files/
+      - aws s3 cp email_results.zip s3://codebuild-eu-ireland-lambda-rules/zip-files/
+      - aws s3 cp generate_reports.zip s3://codebuild-eu-ireland-lambda-rules/zip-files/
+      - aws s3 cp iam_cert_expiry_check.zip s3://codebuild-eu-ireland-lambda-rules/zip-files/
+      - aws s3 cp mfa_not_enabled.zip s3://codebuild-eu-ireland-lambda-rules/zip-files/
+      - aws s3 cp multiple_access_keys.zip s3://codebuild-eu-ireland-lambda-rules/zip-files/
+      - aws s3 cp password_policy.zip s3://codebuild-eu-ireland-lambda-rules/zip-files/
+      - aws s3 cp rds_disabled_backup.zip s3://codebuild-eu-ireland-lambda-rules/zip-files/
+      - aws s3 cp rds_instance_in_public_subnet.zip s3://codebuild-eu-ireland-lambda-rules/zip-files/
+      - aws s3 cp rds_with_byol.zip s3://codebuild-eu-ireland-lambda-rules/zip-files/
+      - aws s3 cp rds_with_magnetic_storage.zip s3://codebuild-eu-ireland-lambda-rules/zip-files/
+      - aws s3 cp rds_with_multiaz_disabled.zip s3://codebuild-eu-ireland-lambda-rules/zip-files/
+      - aws s3 cp s3_public_list.zip s3://codebuild-eu-ireland-lambda-rules/zip-files/
+      - aws s3 cp s3_public_read_acp.zip s3://codebuild-eu-ireland-lambda-rules/zip-files/
+      - aws s3 cp s3_public_write.zip s3://codebuild-eu-ireland-lambda-rules/zip-files/
+      - aws s3 cp s3_public_write_acp.zip s3://codebuild-eu-ireland-lambda-rules/zip-files/
+      - aws s3 cp unrestricted_security_groups.zip s3://codebuild-eu-ireland-lambda-rules/zip-files/
+      - aws s3 cp unused_access_keys.zip s3://codebuild-eu-ireland-lambda-rules/zip-files/
+      - aws s3 cp unused_elastic_ips.zip s3://codebuild-eu-ireland-lambda-rules/zip-files/
+      - aws s3 cp unused_rds.zip s3://codebuild-eu-ireland-lambda-rules/zip-files/
+      - aws s3 cp unused_security_groups.zip s3://codebuild-eu-ireland-lambda-rules/zip-files/
+
+
+
+
+
+    
+
+ 
+
+    
+      
+   
+
+
+    
+
+
+  
+
+  
+      
+
+  
+        
+      
+
+    
+        
+      
+
+    
+  
+
+   
+    
+
+   
