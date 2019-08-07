@@ -14,7 +14,7 @@ phases:
       - echo Build started on `date`
       - aws s3 cp s3://codebuild-eu-ireland-lambda-rules/zip-files/  ~/Downloads --recursive
       - chmod 755 build_script.sh
-      - ./build_script.sh
+      - ./build_script_lambda.sh
   post_build:
     commands:
       - echo Build completed on `date`
