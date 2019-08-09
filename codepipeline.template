@@ -1,0 +1,538 @@
+AWSTemplateFormatVersion: 2010-09-09
+Description: Automate the CRAWS deployment using AWS CodePipeline with CodeCommit as the source stage and CodeBuild as the build stage.
+#Cloudformation template parameters. Users provides the parameter values while creating stack
+Parameters:
+  ArtifactStoreBucket:
+    Type: String
+    MinLength: "1"
+    MaxLength: "100"
+    Description: S3 bucket to store the build artifacts
+  CrawsRoleName:
+    Type: String
+    Description: Lambda Execution role for core CRAWS module, can write to Craws s3 bucket and send emails
+    Default: crawsExecution
+    ConstraintDescription: Must be a valid IAM Role
+  CrawsAccounts:
+    Type: String
+    Description: Parameter to store the accounts that CRAWS has to analyze. The json value is taken from the user as input
+  CodeCommitRepo:
+    Type: String
+    MinLength: "1"
+    MaxLength: "100"
+    Description: AWS CodeCommit Repository that stores all the python lambda rules, lambda layer structure, buildspec yaml and, build_script files
+    Default: craws-pipeline
+  PipelineName:
+    Type: String
+    Description: Name of the AWS CodePipeline to be created through Cloudformation template. Automates the CRAWS deployment in any AWS account
+    MinLength: "1"
+    MaxLength: "100"
+    Default: craws-pipeline
+  BuildProjectName:
+    Type: String
+    Description: Name of the AWS Codebuild project 
+    MinLength: "1"
+    MaxLength: "100"
+    Default: craws-lambda-rules
+  RepositoryBranch:
+    Type: String
+    MinLength: "1"
+    MaxLength: "100"
+    Description: The Codecommit repository branch where changes will be pushed 
+    Default: master
+  Region: 
+    Type: String
+    MinLength: "1"
+    MaxLength: "100"
+    Description: The AWS region in which the Cloudformation stack will be deployed
+    Default: eu-west-1    #  EU (Ireland)
+#The AWS resources to be created with Cloudformation template
+Resources:
+# Creates the required IAM policies
+  CrawsStsAssumeRolePolicy:
+    Type: 'AWS::IAM::ManagedPolicy'
+    Properties:
+        Description: The custom policy is applied to the Lambda execution role for core CRAWS module. Allows sts:AssumeRole action on Lambda execution role
+        Groups:
+            - Ref: PolicyGroup
+        PolicyDocument: {
+    "Version": "2012-10-17",
+    "Statement": [
+        {
+            "Sid": "VisualEditor0",
+            "Effect": "Allow",
+            "Action": "sts:AssumeRole",
+            "Resource": "*"
+        }
+    ]
+}
+        ManagedPolicyName: CrawsStsAssumeRole
+  CrawsS3AccessPolicy:
+    Type: 'AWS::IAM::ManagedPolicy'
+    Properties:
+        Description: Allows read-write permission on the Craws bucket
+        PolicyDocument: {
+    "Version": "2012-10-17",
+    "Statement": [
+        {
+            "Sid": "VisualEditor0",
+            "Effect": "Allow",
+            "Action": [
+                "s3:PutAnalyticsConfiguration",
+                "s3:GetObjectVersionTagging",
+                "s3:CreateBucket",
+                "s3:ReplicateObject",
+                "s3:GetObjectAcl",
+                "s3:DeleteBucketWebsite",
+                "s3:PutLifecycleConfiguration",
+                "s3:GetObjectVersionAcl",
+                "s3:PutObjectTagging",
+                "s3:DeleteObject",
+                "s3:GetIpConfiguration",
+                "s3:DeleteObjectTagging",
+                "s3:GetBucketWebsite",
+                "s3:PutReplicationConfiguration",
+                "s3:DeleteObjectVersionTagging",
+                "s3:GetBucketNotification",
+                "s3:PutBucketCORS",
+                "s3:GetReplicationConfiguration",
+                "s3:ListMultipartUploadParts",
+                "s3:PutObject",
+                "s3:GetObject",
+                "s3:PutBucketNotification",
+                "s3:PutBucketLogging",
+                "s3:GetAnalyticsConfiguration",
+                "s3:GetObjectVersionForReplication",
+                "s3:GetLifecycleConfiguration",
+                "s3:ListBucketByTags",
+                "s3:GetInventoryConfiguration",
+                "s3:GetBucketTagging",
+                "s3:PutAccelerateConfiguration",
+                "s3:DeleteObjectVersion",
+                "s3:GetBucketLogging",
+                "s3:ListBucketVersions",
+                "s3:ReplicateTags",
+                "s3:RestoreObject",
+                "s3:ListBucket",
+                "s3:GetAccelerateConfiguration",
+                "s3:GetBucketPolicy",
+                "s3:PutEncryptionConfiguration",
+                "s3:GetEncryptionConfiguration",
+                "s3:GetObjectVersionTorrent",
+                "s3:AbortMultipartUpload",
+                "s3:PutBucketTagging",
+                "s3:GetBucketRequestPayment",
+                "s3:GetObjectTagging",
+                "s3:GetMetricsConfiguration",
+                "s3:DeleteBucket",
+                "s3:PutBucketVersioning",
+                "s3:PutObjectAcl",
+                "s3:ListBucketMultipartUploads",
+                "s3:PutMetricsConfiguration",
+                "s3:PutObjectVersionTagging",
+                "s3:GetBucketVersioning",
+                "s3:GetBucketAcl",
+                "s3:PutInventoryConfiguration",
+                "s3:PutIpConfiguration",
+                "s3:GetObjectTorrent",
+                "s3:PutBucketWebsite",
+                "s3:PutBucketRequestPayment",
+                "s3:GetBucketCORS",
+                "s3:GetBucketLocation",
+                "s3:ReplicateDelete",
+                "s3:GetObjectVersion"
+            ],
+            "Resource": [
+                "arn:aws:s3:::${Ref:ArtifactStoreBucket}",
+                "arn:aws:s3:::${Ref:ArtifactStoreBucket}/*"
+            ]
+        },
+        {
+            "Sid": "VisualEditor1",
+            "Effect": "Allow",
+            "Action": [
+                "s3:ListAllMyBuckets",
+                "s3:HeadBucket"
+            ],
+            "Resource": "*"
+        }
+    ]
+}
+        ManagedPolicyName: CrawsS3Access
+#Creates the IAM groups
+  PolicyGroup:
+    Type: 'AWS::IAM::Group'
+    Description: The users attached to this group has readonly and CrawsStsAssumeRole permissions on AWS resources
+    Properties:
+        GroupName: cloudops-readonly
+        ManagedPolicyArns: 
+            - 'arn:aws:iam::aws:policy/ReadOnlyAccess'
+  UserGroup:
+    Type: 'AWS::IAM::Group'
+    Description: The users attched to this group has AWS CodeCommit, IAM readonly access and, permission to manage IAM credentials  
+    Properties:
+        GroupName: codecommit-developers
+        ManagedPolicyArns: 
+            - 'arn:aws:iam::aws:policy/AWSCodeCommitPowerUser'
+            - 'arn:aws:iam::aws:policy/IAMSelfManageServiceSpecificCredentials'
+            - 'arn:aws:iam::aws:policy/IAMReadOnlyAccess'
+#Creates the IAM CRAWS user - The trusted entity that can assume the crawsExecution role
+  CrawsUser:
+    Type: 'AWS::IAM::User'
+    Description: The user belongs to cloudops-readonly and codecommit-developers groups
+    Properties:
+        Groups:
+            - Ref: PolicyGroup
+            - Ref: UserGroup
+        ManagedPolicyArns: 
+            - 'arn:aws:iam::aws:policy/AdministratorAccess'
+        UserName: Craws
+#Creates cloudops-admin role - The trusted entity that can assume the crawsExecution role
+  CloudOpsAdminRole:
+    Type: 'AWS::IAM::Role'
+    Description: Allows EC2 instances to call AWS services on your behalf
+    Properties:
+        AssumeRolePolicyDocument: 
+            Version: '2012-10-17'
+            Statement: 
+                - 
+                    Effect: 'Allow'
+                    Principal: {
+                        AWS: [
+                             "Fn::Join": ["", [
+            "arn:aws:iam::",
+            { "Ref": "AWS::AccountId"},
+            ":user/", 
+            { Ref: CrawsUser}
+                        ]
+         ]
+                        ]
+            }
+                    Action: 
+                        - "sts:AssumeRole"
+        Path: "/"
+        ManagedPolicyArns: 
+            - 'arn:aws:iam::aws:policy/AdministratorAccess'
+        RoleName: cloudops-admin
+#Creates the crawsExecution role that can write to Craws S3 bucket and send emails
+  CrawsExecutionRole:
+    Type: 'AWS::IAM::Role'
+    Description: Lambda Execution role for core Craws module, can write to Craws s3 bucket and send emails
+    Properties:
+        ManagedPolicyArns: 
+            - 'arn:aws:iam::aws:policy/ReadOnlyAccess'
+            - 'arn:aws:iam::aws:policy/AWSLambdaFullAccess'
+            - 'arn:aws:iam::aws:policy/AmazonSESFullAccess'
+            - 'arn:aws:iam::aws:policy/CloudWatchLogsFullAccess'
+            - !Ref CrawsStsAssumeRolePolicy
+            - !Ref CrawsS3AccessPolicy
+        AssumeRolePolicyDocument: 
+            Version: '2012-10-17'
+            Statement: 
+                - 
+                    Effect: 'Allow'
+                    Principal: {
+                        Service: 'lambda.amazonaws.com',
+                        AWS: [
+                             "Fn::Join": ["", [
+            "arn:aws:iam::",
+            { "Ref": "AWS::AccountId"},
+            ":user/", 
+            { Ref: CrawsUser}
+                        ]
+         ],
+                             "Fn::Join": ["", [
+            "arn:aws:iam::",
+            { "Ref": "AWS::AccountId"},
+            ":role/",
+            { Ref: CloudOpsAdminRole}
+                        ]
+         ]
+                        ]
+            }
+                    Action: 
+                        - "sts:AssumeRole"
+        Path: "/"
+        RoleName:
+            Ref: CrawsRoleName
+#parameter in AWS Systems Manager Parameter Store containing required information for any AWS account that CRAWS has to analyze 
+  CrawsParameter:
+    Type: 'AWS::SSM::Parameter'
+    Properties:
+        Description: Stores Accounts that "CRAWS - Compliance Reporting for AWS" has to analyze
+        Name: craws-accounts
+        Type: String 
+        Value: !Ref CrawsAccounts
+#parameter for storing bucket name in AWS Systems Manager Parameter Store
+  BucketParameter:
+    Type: 'AWS::SSM::Parameter'
+    Properties:
+        Description: Stores the bucket name provided by user. This bucket will be used to store the build artifacts
+        Name: bucket-name
+        Type: String 
+        Value: !Ref ArtifactStoreBucket
+#The Cloudwatch event rules that matches incoming events and invokes the target (lambda functions) for processing the events
+  ScheduledRule1:
+    Type: 'AWS::Events::Rule'
+    DependsOn: CodePipelineStack
+    Properties:
+        Description: RDS-in-public-subnet, access-keys-not-rotated, account-password-policy, cloudtrail-log-status, default-SG-inuse
+        ScheduleExpression: cron(0 8 ? * MON-FRI *)
+        Name: craws-group-1
+        State: ENABLED
+        Targets:
+            - Id: Target1
+              Arn: !Sub "arn:aws:lambda:${AWS::Region}:${AWS::AccountId}:function:craws-default-SG-inuse"
+            - Id: Target2
+              Arn: !Sub "arn:aws:lambda:${AWS::Region}:${AWS::AccountId}:function:craws-access-keys-not-rotated"
+            - Id: Target3
+              Arn: !Sub "arn:aws:lambda:${AWS::Region}:${AWS::AccountId}:function:craws-RDS-in-public-subnet"
+            - Id: Target4
+              Arn: !Sub "arn:aws:lambda:${AWS::Region}:${AWS::AccountId}:function:craws-account-password-policy"
+            - Id: Target5
+              Arn: !Sub "arn:aws:lambda:${AWS::Region}:${AWS::AccountId}:function:craws-cloudtrail-log-status"
+  #PermissionForEventsToInvokeLambdaGroup1: 
+    #Type: AWS::Lambda::Permission
+    #Properties: 
+        #FunctionName: 
+            #- "craws-default-SG-inuse"
+            #- "craws-access-keys-not-rotated"
+        #Action: "lambda:InvokeFunction"
+        #Principal: "events.amazonaws.com"
+        #SourceArn: 
+            #Fn::GetAtt: 
+                #- "ScheduledRule1"
+                #- "Arn"
+  ScheduledRule2:
+    Type: 'AWS::Events::Rule'
+    DependsOn: CodePipelineStack
+    Properties:
+        Description: disabled-automated-rds-backup, disabled-cloudtrail, ec2-instances-distribution, mfa-not-enabled, multiple-access-keys
+        ScheduleExpression: cron(15 8 ? * MON-FRI *)
+        Name: craws-group-2
+        State: ENABLED
+        Targets:
+            - Id: Target1
+              Arn: !Sub "arn:aws:lambda:${AWS::Region}:${AWS::AccountId}:function:craws-disabled-automated-rds-backup"
+            - Id: Target2
+              Arn: !Sub "arn:aws:lambda:${AWS::Region}:${AWS::AccountId}:function:craws-disabled-cloudtrail"
+            - Id: Target3
+              Arn: !Sub "arn:aws:lambda:${AWS::Region}:${AWS::AccountId}:function:craws-ec2-instances-distribution"
+            - Id: Target4
+              Arn: !Sub "arn:aws:lambda:${AWS::Region}:${AWS::AccountId}:function:craws-mfa-not-enabled"
+            - Id: Target5
+              Arn: !Sub "arn:aws:lambda:${AWS::Region}:${AWS::AccountId}:function:craws-multiple-access-keys"
+  ScheduledRule3:
+    Type: 'AWS::Events::Rule'
+    DependsOn: CodePipelineStack
+    Properties:
+        Description: rds-with-byol, s3-public-list, s3-public-read-acp, s3-public-write, s3-public-write-acp
+        ScheduleExpression: cron(30 8 ? * MON-FRI *)
+        Name: craws-group-3
+        State: ENABLED
+        Targets:
+            - Id: Target1
+              Arn: !Sub "arn:aws:lambda:${AWS::Region}:${AWS::AccountId}:function:craws-rds-with-byol"
+            - Id: Target2
+              Arn: !Sub "arn:aws:lambda:${AWS::Region}:${AWS::AccountId}:function:craws-s3-public-list"
+            - Id: Target3
+              Arn: !Sub "arn:aws:lambda:${AWS::Region}:${AWS::AccountId}:function:craws-s3-public-write"
+            - Id: Target4
+              Arn: !Sub "arn:aws:lambda:${AWS::Region}:${AWS::AccountId}:function:craws-s3-public-read-acp"
+            - Id: Target5
+              Arn: !Sub "arn:aws:lambda:${AWS::Region}:${AWS::AccountId}:function:craws-s3-public-write-acp"
+  ScheduledRule4:
+    Type: 'AWS::Events::Rule'
+    DependsOn: CodePipelineStack
+    Properties:
+        Description: unrestricted-access, unused-access-keys, unused-elastic-ips, unused-rds, unused-security-groups
+        ScheduleExpression: cron(45 8 ? * MON-FRI *)
+        Name: craws-group-4
+        State: ENABLED
+        Targets:
+            - Id: Target1
+              Arn: !Sub "arn:aws:lambda:${AWS::Region}:${AWS::AccountId}:function:craws-unrestricted-access"
+            - Id: Target2
+              Arn: !Sub "arn:aws:lambda:${AWS::Region}:${AWS::AccountId}:function:craws-unused-access-keys"
+            - Id: Target3
+              Arn: !Sub "arn:aws:lambda:${AWS::Region}:${AWS::AccountId}:function:craws-unused-rds"
+            - Id: Target4
+              Arn: !Sub "arn:aws:lambda:${AWS::Region}:${AWS::AccountId}:function:craws-unused-security-groups"
+            - Id: Target5
+              Arn: !Sub "arn:aws:lambda:${AWS::Region}:${AWS::AccountId}:function:craws-unused-elastic-ips"
+  ScheduledRule5:
+    Type: 'AWS::Events::Rule'
+    DependsOn: CodePipelineStack
+    Properties:
+        Description: default-vpc-in-use, rds-with-multi-az-disabled, rds-with-magnetic-storage-type, certificate-expiry
+        ScheduleExpression: cron(00 9 ? * MON-FRI *)
+        Name: craws-group-5
+        State: ENABLED
+        Targets:
+            - Id: Target1
+              Arn: !Sub "arn:aws:lambda:${AWS::Region}:${AWS::AccountId}:function:craws-default-vpc-in-use"
+            - Id: Target2
+              Arn: !Sub "arn:aws:lambda:${AWS::Region}:${AWS::AccountId}:function:craws-rds-with-multiAZ-disabled"
+            - Id: Target3
+              Arn: !Sub "arn:aws:lambda:${AWS::Region}:${AWS::AccountId}:function:craws-rds-with-magnetic-storage-type"
+            - Id: Target4
+              Arn: !Sub "arn:aws:lambda:${AWS::Region}:${AWS::AccountId}:function:craws-iam-certificate-expiry"
+            - Id: Target5
+              Arn: !Sub "arn:aws:lambda:${AWS::Region}:${AWS::AccountId}:function:craws-acm-certificate-expiry"
+  ScheduledRule6:
+    Type: 'AWS::Events::Rule'
+    DependsOn: CodePipelineStack
+    Properties:
+        Description: EC2 Maintenance Events
+        ScheduleExpression: cron(30 8 ? * MON-FRI *)
+        Name: craws-group-6
+        State: ENABLED
+        Targets:
+            - Id: Target1
+              Arn: !Sub "arn:aws:lambda:${AWS::Region}:${AWS::AccountId}:function:craws-ec2-maintenance"
+  GenerateReportScheduledRule:
+    Type: 'AWS::Events::Rule'
+    DependsOn: CodePipelineStack
+    Properties:
+        Description: Generate craws reports for all accounts
+        ScheduleExpression: cron(0 13 ? * MON-FRI *)
+        Name: craws-generate-reports
+        State: ENABLED
+        Targets:
+            - Id: Target1
+              Arn: !Sub "arn:aws:lambda:${AWS::Region}:${AWS::AccountId}:function:craws-generate-reports"
+  EmailResultsScheduledRule:
+    Type: 'AWS::Events::Rule'
+    DependsOn: CodePipelineStack
+    Properties:
+        Description: Send craws emails to all the subscribers
+        ScheduleExpression: cron(0 16 ? * MON-FRI *)
+        Name: craws-email-results
+        State: ENABLED
+        Targets:
+            - Id: Target1
+              Arn: !Sub "arn:aws:lambda:${AWS::Region}:${AWS::AccountId}:function:craws-email-results"
+#The Codepipeline stack creates stages for the pipeline, Codepipeline role, Codebuild role, and the Codebuild project 
+  CodePipelineStack:
+    Type: 'AWS::CodePipeline::Pipeline'
+    Description: AWS CodePipeline to automate the "CRAWS - Compliance Reporting for AWS" deployment in any AWS account
+    DependsOn: CrawsExecutionRole
+    Properties:
+      Name: !Ref PipelineName
+      RoleArn: !GetAtt 
+        - CodePipelineRole
+        - Arn
+      ArtifactStore:
+        Location: !Ref ArtifactStoreBucket
+        Type: S3
+      Stages:
+        - Name: Source
+          Actions:
+            - Name: Source
+              ActionTypeId:
+                Category: Source
+                Owner: AWS
+                Version: 1
+                Provider: CodeCommit
+              OutputArtifacts:
+              - Name: SourceArtifact
+              Configuration:
+                BranchName: !Ref RepositoryBranch
+                RepositoryName: !Ref CodeCommitRepo
+                PollForSourceChanges: true
+              Region: !Ref Region
+              RunOrder: 1
+        - Name: Build
+          Actions:
+            - Name: Build
+              ActionTypeId:
+                Category: Build
+                Owner: AWS
+                Version: 1
+                Provider: CodeBuild
+              OutputArtifacts:
+                - Name: BuildArtifact
+              InputArtifacts:
+                - Name: SourceArtifact
+              Configuration:
+                ProjectName: !Ref CodeBuildProject
+              Region: !Ref Region  
+              RunOrder: 1
+  CodePipelineRole:
+    Description: Service role in IAM for AWS CodePipeline. This role has all the permissions required to execute the codepipeline successfully
+    Type: 'AWS::IAM::Role'
+    Properties:
+      RoleName: !Sub "codepipeline-${Region}-${PipelineName}"
+      AssumeRolePolicyDocument:
+        Version: 2012-10-17
+        Statement:
+          Effect: Allow
+          Principal:
+            Service: codepipeline.amazonaws.com
+          Action: 'sts:AssumeRole'
+      ManagedPolicyArns:
+        - 'arn:aws:iam::aws:policy/AdministratorAccess'
+        - 'arn:aws:iam::aws:policy/AmazonSSMFullAccess'
+        - 'arn:aws:iam::aws:policy/AWSCodePipelineFullAccess'
+      Path: /
+  CodeBuildProject:
+    Type: 'AWS::CodeBuild::Project'
+    DependsOn: CodeBuildRole
+    Properties:
+      Artifacts:
+        Type: no_artifacts
+      Environment:
+        ComputeType: BUILD_GENERAL1_SMALL
+        Image: 'aws/codebuild/standard:2.0'
+        Type: LINUX_CONTAINER
+        EnvironmentVariables:
+            - Name: AWS_Region
+              Type: PLAINTEXT
+              Value: !Ref Region
+            - Name: Craws_Role
+              Type: PLAINTEXT
+              Value: !Ref CrawsRoleName
+            - Name: AWS_AccountId
+              Type: PLAINTEXT
+              Value: !Ref "AWS::AccountId"  #Access the pseudo parameter aws accountid
+      Name: !Ref BuildProjectName 
+      Description: Build project to create or update the lambda functions and add lambda layer to the functions
+      ServiceRole: !Ref CodeBuildRole
+      Source:
+        Type: CODECOMMIT
+        Location:
+          Fn::Join:
+            - ""
+            - - "https://git-codecommit."
+              - Ref: Region 
+              - ".amazonaws.com/v1/repos/"
+              - Ref: CodeCommitRepo
+        GitCloneDepth: 1
+  CodeBuildRole:
+    Type: 'AWS::IAM::Role'
+    Description: Service role in IAM for AWS CodeBuild. This role has all the permissions required to execute the build project successfully
+    Properties:
+      RoleName: !Sub "${BuildProjectName}-codebuild-service-role"
+      AssumeRolePolicyDocument:
+        Version: 2012-10-17
+        Statement:
+          Effect: Allow
+          Principal:
+            Service: codebuild.amazonaws.com
+          Action: 'sts:AssumeRole'
+      ManagedPolicyArns:
+        - 'arn:aws:iam::aws:policy/AdministratorAccess'
+        - 'arn:aws:iam::aws:policy/AmazonS3FullAccess'
+        - 'arn:aws:iam::aws:policy/AWSCloudFormationReadOnlyAccess'
+        - 'arn:aws:iam::aws:policy/AWSDeepRacerCloudFormationAccessPolicy'
+        - 'arn:aws:iam::aws:policy/AWSLambdaFullAccess'
+        - 'arn:aws:iam::aws:policy/AmazonSSMFullAccess'
+      Path: /
+
+
+
+
+
+
+
+
+
