@@ -1,7 +1,7 @@
 """ This rule checks whether users have Unused access/secret keys.
 """
 
-__version__ = '0.3.0'
+__version__ = '1.0.1'
 __author__ = 'Anmol Saini'
 
 import boto3
@@ -29,8 +29,9 @@ def handler(event, context):
             # This rule has not been executed today for this account, go ahead and execute
             results = {'Rule Name': 'Unused Access Keys'}
             results['Area'] = 'IAM'
-            results['Description'] = 'Auditing all IAM users&#39; access keys is a good way to secure the AWS account ' + \
-                                    'against attacks. This rule will identify the access keys not used in the last 90 days.'
+            results['Description'] = 'Auditing all IAM users&#39; access keys and inactivating/deleting unused ones is a good way ' + \
+                                    'to secure the AWS account against attacks. This rule will identify the access keys not used ' + \
+                                    'in the last 90 days.'
             details = []
             try:
                 response = sts.assume_role(RoleArn=account['role_arn'], RoleSessionName='UnusedKeys')

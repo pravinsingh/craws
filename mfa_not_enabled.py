@@ -1,7 +1,7 @@
 """ This rule checks whether MFA (Multi Factor Authentication) is enabled for all IAM users as well as the root account.
 """
 
-__version__ = '1.0.0'
+__version__ = '1.0.1'
 __author__ = 'Pravin Singh'
 
 import boto3
@@ -31,9 +31,10 @@ def handler(event, context):
             # This rule has not been executed today for this account, go ahead and execute
             results = {'Rule Name': 'MFA Not Enabled'}
             results['Area'] = 'IAM'
-            results['Description'] = 'Having MFA-protected IAM users is the best way to protect your AWS resources and services against' +\
-                ' attackers. An MFA device signature adds an extra layer of protection on top of your existing IAM user credentials.' +\
-                ' NOTE: This rule only validates MFA for console users, it does not validate the non-console users (e.g. SES users).'
+            results['Description'] = 'Having MFA-protected IAM users is the best way to protect your AWS resources and services' +\
+                ' against attackers. An MFA device signature adds an extra layer of protection on top of your existing IAM user' +\
+                ' credentials. <br><b>NOTE:</b> This rule only validates MFA for console users, it does not validate the' +\
+                ' non-console users (<i>e.g.</i> SES users).'
             details = []
             try:
                 response = sts.assume_role(RoleArn=account['role_arn'], RoleSessionName='MfaNotEnabled')
