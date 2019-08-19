@@ -155,7 +155,7 @@ def get_cloudtrail_data(lookup_value, cloudtrail_client, region_id='us-east-1'):
     The returned value should replace the lookup value in the calling function (since it anyways returns the original lookup \
     value in case there are no CloudTrail logs).\n
         ``lookup_value``: The Id/name of the resource to be looked up\n
-        ``cloudtrail_client``: CloudTrail client for the account containing the resource
+        ``cloudtrail_client``: CloudTrail client for the account containing the resource\n
         ``region_id``: Region Id of the resource, defaults to 'us-east-1' for global resources\n
     """
     try:
