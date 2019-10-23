@@ -1,7 +1,7 @@
 """ This rule checks for any unused security groups in AWS account.
 """
 
-__version__ = '0.6.2'
+__version__ = '0.7.0'
 __author__ = 'Bhupender Kumar'
 import boto3
 import craws
@@ -12,7 +12,6 @@ def handler(event, context):
     logger.debug('Unused Security Groups check started')
 
     sts = boto3.client('sts')
-    
     for account in craws.accounts:
         try:
             # Check if this rule has already been executed today for this account
@@ -27,8 +26,8 @@ def handler(event, context):
             # This rule has not been executed today for this account, go ahead and execute
             results = {'Rule Name': 'Unused Custom Security Groups'}
             results['Area'] = 'EC2'
-            results['Description'] = 'This rule checks the unused and dangling custom security groups in the AWS account. Security '  +\
-                'groups that are not attached to any resource should be deleted to minimize the surface of attack.'
+            results['Description'] = 'This rule checks the unused and dangling custom security groups in the AWS account. Security ' + \
+                                 'groups that are not attached to any resource should be deleted to minimize the surface of attack.'
             details = []
             try:
                 response = sts.assume_role(RoleArn=account['role_arn'], RoleSessionName='unused_SG')
@@ -40,19 +39,19 @@ def handler(event, context):
             green_count = red_count = orange_count = yellow_count = grey_count = 0
 
             for region in regions:
+                logger.debug('REGION: ' + region['Id'])
                 ec2_client = boto3.client('ec2', region_name=region['Id'],
-                                            aws_access_key_id=credentials['AccessKeyId'], 
-                                            aws_secret_access_key=credentials['SecretAccessKey'], 
-                                            aws_session_token=credentials['SessionToken'])
+                                    aws_access_key_id=credentials['AccessKeyId'],
+                                    aws_secret_access_key=credentials['SecretAccessKey'],
+                                    aws_session_token=credentials['SessionToken'])
                 cloudtrail_client = boto3.client('cloudtrail', region_name=region['Id'],
-                                            aws_access_key_id=credentials['AccessKeyId'], 
-                                            aws_secret_access_key=credentials['SecretAccessKey'], 
-                                            aws_session_token=credentials['SessionToken'])
+                                    aws_access_key_id=credentials['AccessKeyId'],
+                                    aws_secret_access_key=credentials['SecretAccessKey'],
+                                    aws_session_token=credentials['SessionToken'])
                 try:
                     result = []
                     sgrps = ec2_client.describe_security_groups()
-                    default_sgrps = set([sg['GroupId'] for sg in sgrps['SecurityGroups'] if 
-                                            sg['Description'] == 'default VPC security group' and sg['GroupName'] == 'default'])
+                    default_sgrps = set([sg['GroupId'] for sg in sgrps['SecurityGroups'] if sg['GroupName'] == 'default'])
                     all_sgrps = set([sg['GroupId'] for sg in sgrps['SecurityGroups']])
                     cstm_sgrps = set()
                     cstm_sgrps = all_sgrps - default_sgrps
@@ -62,29 +61,43 @@ def handler(event, context):
                         for grp in interface['Groups']:
                             used_sgrps.add(grp['GroupId'])
                     green_count += len(list(used_sgrps))
-                            
+
                     unused_sgs = cstm_sgrps - used_sgrps
+
                     for unused_sec_grp in list(unused_sgs):
+                        for sg in sgrps['SecurityGroups']:
+                            if sg['GroupId'] == unused_sec_grp:
                         # Some issues found, mark it as Red/Orange/Yellow depending on this check's risk level
-                        #details.append({'Status': craws.status['Red'], 'Region': region['Id'] + " (" + region['ShortName'] + ")", 'Result': result})
-                        orange_count += 1
-                        unused_sec_grp = craws.get_cloudtrail_data(lookup_value=unused_sec_grp, 
-                                            cloudtrail_client=cloudtrail_client, region_id=region['Id'])
-                        result.append({'Security Group Id': unused_sec_grp})
-                    
+                        # details.append({'Status': craws.status['Red'], 'Region': region['Id'] + " (" + region['ShortName'] + ")", 'Result': result})
+                                orange_count += 1
+
+                                unused_sec_grp_data = craws.get_cloudtrail_data(lookup_value=unused_sec_grp,
+                                                                   cloudtrail_client=cloudtrail_client,
+                                                                   region_id=region['Id'])
+                                result.append({'Security Group Id': unused_sec_grp_data,
+                                        'Name': sg['GroupName'],
+                                        'VPC ID': sg['VpcId'] if 'VpcId' in sg else ''
+                                })
+
                 except Exception as e:
                     logger.error(e)
                     # Exception occured, mark it as Grey (not checked)
-                    details.append({'Status': craws.status['Grey'], 'Region': region['Id'] + " (" + region['ShortName'] + ")", 'Result': result})
+                    details.append(
+                        {'Status': craws.status['Grey'], 'Region': region['Id'] + " (" + region['ShortName'] + ")",
+                         'Result': result})
                     grey_count += 1
-                
+
                 if len(result) == 0:
                     # All good, mark it as Green
-                    #details.append({'Region': region['Id'] + " (" + region['ShortName'] + ")", 'Status': craws.status['Green'], 'Result': result})
-                    details.append({'Status': craws.status['Green'], 'Region': region['Id'] + " (" + region['ShortName'] + ")", 'Result': result})
+                    # details.append({'Region': region['Id'] + " (" + region['ShortName'] + ")", 'Status': craws.status['Green'], 'Result': result})
+                    details.append(
+                        {'Status': craws.status['Green'], 'Region': region['Id'] + " (" + region['ShortName'] + ")",
+                         'Result': result})
                 else:
                     # Some issues found, mark it as Red/Orange/Yellow depending on this check's risk level
-                    details.append({'Status': craws.status['Orange'], 'Region': region['Id'] + " (" + region['ShortName'] + ")", 'Result': result})
+                    details.append(
+                        {'Status': craws.status['Orange'], 'Region': region['Id'] + " (" + region['ShortName'] + ")",
+                         'Result': result})
 
             results['Details'] = details
             results['GreenCount'] = green_count
@@ -93,7 +106,10 @@ def handler(event, context):
             results['YellowCount'] = yellow_count
             results['GreyCount'] = grey_count
             craws.upload_result_json(results, 'UnusedSecurityGroups.json', account['account_id'])
+            
             logger.info('Results for account %s uploaded to s3', account['account_id'])
 
     logger.debug('Unused Security Groups check finished')
 
+if (__name__ == "__main__"):
+    handler (None,None)
