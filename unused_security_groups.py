@@ -1,8 +1,8 @@
 """ This rule checks for any unused security groups in AWS account.
 """
 
-__version__ = '0.7.0'
-__author__ = 'Bhupender Kumar'
+__version__ = '0.8.0'
+__author__ = 'Bhupender Kumar, Pravin Singh'
 import boto3
 import craws
 import datetime
@@ -24,13 +24,14 @@ def handler(event, context):
             logger.info('Account ' + account['account_id'] + ' already checked. Skipping.')
         except Exception:
             # This rule has not been executed today for this account, go ahead and execute
+            logger.info('Starting Account ' + account['account_id'] + ' ...')
             results = {'Rule Name': 'Unused Custom Security Groups'}
             results['Area'] = 'EC2'
             results['Description'] = 'This rule checks the unused and dangling custom security groups in the AWS account. Security ' + \
                                  'groups that are not attached to any resource should be deleted to minimize the surface of attack.'
             details = []
             try:
-                response = sts.assume_role(RoleArn=account['role_arn'], RoleSessionName='unused_SG')
+                response = sts.assume_role(RoleArn=account['role_arn'], RoleSessionName='unused_security_group')
             except Exception as e:
                 logger.error(e)
                 continue
@@ -50,33 +51,47 @@ def handler(event, context):
                                     aws_session_token=credentials['SessionToken'])
                 try:
                     result = []
-                    sgrps = ec2_client.describe_security_groups()
-                    default_sgrps = set([sg['GroupId'] for sg in sgrps['SecurityGroups'] if sg['GroupName'] == 'default'])
-                    all_sgrps = set([sg['GroupId'] for sg in sgrps['SecurityGroups']])
-                    cstm_sgrps = set()
-                    cstm_sgrps = all_sgrps - default_sgrps
-                    used_sgrps = set()
+                    security_groups = ec2_client.describe_security_groups()
+                    default_security_groups = set([security_group['GroupId'] \
+                        for security_group in security_groups['SecurityGroups'] \
+                            if security_group['GroupName'] == 'default'])
+                    all_security_groups = set([security_group['GroupId'] for security_group in security_groups['SecurityGroups']])
+                    custom_security_groups = set(all_security_groups - default_security_groups)
+                    used_security_groups = set()
+
+                    # Check if the security group is used in a network interface
                     net_interface = ec2_client.describe_network_interfaces()
                     for interface in net_interface['NetworkInterfaces']:
-                        for grp in interface['Groups']:
-                            used_sgrps.add(grp['GroupId'])
-                    green_count += len(list(used_sgrps))
+                        for group in interface['Groups']:
+                            used_security_groups.add(group['GroupId'])
 
-                    unused_sgs = cstm_sgrps - used_sgrps
+                    # Check if the security group is used in another security group's inbound rules
+                    for security_group in security_groups['SecurityGroups']:
+                        for IpPermission in security_group['IpPermissions']:
+                            for UserIdGroupPair in IpPermission['UserIdGroupPairs']:
+                                used_security_groups.add(UserIdGroupPair['GroupId'])
 
-                    for unused_sec_grp in list(unused_sgs):
-                        for sg in sgrps['SecurityGroups']:
-                            if sg['GroupId'] == unused_sec_grp:
-                        # Some issues found, mark it as Red/Orange/Yellow depending on this check's risk level
-                        # details.append({'Status': craws.status['Red'], 'Region': region['Id'] + " (" + region['ShortName'] + ")", 'Result': result})
+                    # Check if the security group is used in another security group's outbound rules
+                    for security_group in security_groups['SecurityGroups']:
+                        for IpPermission in security_group['IpPermissionsEgress']:
+                            for UserIdGroupPair in IpPermission['UserIdGroupPairs']:
+                                used_security_groups.add(UserIdGroupPair['GroupId'])
+                    green_count += len(list(used_security_groups))
+
+                    unused_security_groups = custom_security_groups - used_security_groups
+
+                    for unused_security_group in list(unused_security_groups):
+                        for security_group in security_groups['SecurityGroups']:
+                            if security_group['GroupId'] == unused_security_group:
+                                # Some issues found, mark it as Red/Orange/Yellow depending on this check's risk level
                                 orange_count += 1
 
-                                unused_sec_grp_data = craws.get_cloudtrail_data(lookup_value=unused_sec_grp,
+                                unused_security_group_data = craws.get_cloudtrail_data(lookup_value=unused_security_group,
                                                                    cloudtrail_client=cloudtrail_client,
                                                                    region_id=region['Id'])
-                                result.append({'Security Group Id': unused_sec_grp_data,
-                                        'Name': sg['GroupName'],
-                                        'VPC ID': sg['VpcId'] if 'VpcId' in sg else ''
+                                result.append({'Security Group Id': unused_security_group_data,
+                                        'Name': security_group['GroupName'],
+                                        'VPC ID': security_group['VpcId'] if 'VpcId' in security_group else ''
                                 })
 
                 except Exception as e:
