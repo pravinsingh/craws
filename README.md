@@ -21,7 +21,7 @@ Both of these modules also depend on the core module, which in turn uses a libra
 
 ## CRAWS S3 Bucket:
 
-The CRAWS s3 bucket (https://s3.console.aws.amazon.com/s3/buckets/craws/?region=us-east-1) has the following structure:
+The CRAWS s3 bucket has the following structure:
 
 A new folder is created for every date under which, every AWS account has a sub-folder. Sub-folders contain all the json result files coming from all the
 rules, as well as the consolidated Result.html file.
@@ -46,7 +46,7 @@ Name of the bucket in s3 that stores all the results
 **display_name**: The common name this account is referred to as.
 
 **role_arn**: The role that will be used to run the analysis. This role should have read access in its account and should have the role crawsExecution
-(arn:aws:iam::926760075421:role/crawsExecution) as a trusted entity.
+(`arn:aws:iam::<account_id>:role/crawsExecution`) as a trusted entity.
 
 **emails**: Recipients of the report. It's a list of comma separated values.
 - `status`:
